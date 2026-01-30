@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 class="mb-4">Gerenciar Sites Monitorados</h2>
+
+<div class="card mb-4">
+    <div class="card-header">Adicionar Novo Site</div>
+    <div class="card-body">
+        <form method="POST" action="/site/add" class="row g-3">
+            <div class="col-md-4">
+                <input type="text" class="form-control" name="name" placeholder="Nome do Sistema (ex: Júpiter Web)"
+                    required>
+            </div>
+            <div class="col-md-3">
+                <input type="text" class="form-control" name="url"
+                    placeholder="URL (ex: https://uspdigital.usp.br/jupiterweb)" required>
+            </div>
+            <div class="col-md-3">
+                <input type="text" class="form-control" name="expected_text" placeholder="Texto Esperado (Opcional)">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-success w-100">Adicionar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">Sites Cadastrados</div>
+    <div class="card-body p-0">
+        <table class="table table-striped mb-0">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>URL</th>
+                    <th>Texto Validação</th>
+                    <th>Status Atual</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for site in sites %}
+                <tr>
+                    <td>{{ site.name }}</td>
+                    <td><a href="{{ site.url }}" target="_blank">{{ site.url }}</a></td>
+                    <td><small class="text-muted">{{ site.expected_text if site.expected_text else '-' }}</small></td>
+                    <td>
+                        {% if site.is_online %}
+                        <span class="badge bg-success">Online</span>
+                        {% else %}
+                        <span class="badge bg-danger">Offline</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <form method="POST" action="/site/delete/{{ site.id }}"
+                            onsubmit="return confirm('Tem certeza que deseja remover este site?');">
+                            <button type="submit" class="btn btn-sm btn-danger">Excluir</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted">Nenhum site cadastrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
