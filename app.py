@@ -102,7 +102,7 @@ def send_alert_email(site):
 
 # Start Scheduler
 scheduler = BackgroundScheduler()
-scheduler.add_job(func=check_sites, trigger="interval", minutes=5)
+scheduler.add_job(func=check_sites, trigger="interval", minutes=1)
 scheduler.start()
 atexit.register(lambda: scheduler.shutdown())
 
