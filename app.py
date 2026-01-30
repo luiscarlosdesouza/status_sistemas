@@ -83,24 +83,22 @@ def send_alert_email(site):
         print("Email configuration missing. Notification skipped.")
         return
 
-    msg = EmailMessage()
-    msg['Subject'] = f"ALERT: {site.name} is DOWN"
-    msg['From'] = email_user
-    msg['To'] = email_to
-    msg.set_content(f"""
-    The site {site.name} ({site.url}) appears to be down.
-    
-    Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-    Error: {site.error_message}
-    """)
+    recipients = [e.strip() for e in email_to.split(',')]
 
-    try:
-        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
-            smtp.login(email_user, email_pass)
-            smtp.send_message(msg)
-        print(f"Sent alert email for {site.name}")
-    except Exception as e:
-        print(f"Failed to send email: {e}")
+    for recipient in recipients:
+        msg = EmailMessage()
+        msg['Subject'] = f"ALERT: {site.name} is DOWN"
+        msg['From'] = email_user
+        msg['To'] = recipient
+        msg.set_content(f"The site {site.name} ({site.url}) appears to be down.\n\nTime: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\nError: {site.error_message}")
+
+        try:
+            with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+                smtp.login(email_user, email_pass)
+                smtp.send_message(msg)
+            print(f"Sent alert email for {site.name} to {recipient}")
+        except Exception as e:
+            print(f"Failed to send email to {recipient}: {e}")
 
 # Start Scheduler
 scheduler = BackgroundScheduler()
