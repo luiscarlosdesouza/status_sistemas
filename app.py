@@ -34,7 +34,8 @@ class Site(db.Model):
     name = db.Column(db.String(100), nullable=False)
     url = db.Column(db.String(500), nullable=False)
     expected_text = db.Column(db.String(200), nullable=True)
-    is_online = db.Column(db.Boolean, default=False)
+    status = db.Column(db.String(20), default='online')
+    first_failure_time = db.Column(db.DateTime, nullable=True)
     last_checked = db.Column(db.DateTime, nullable=True)
     error_message = db.Column(db.String(500), nullable=True)
 
@@ -44,33 +45,68 @@ def check_sites():
     with app.app_context():
         sites = Site.query.all()
         for site in sites:
-            previous_status = site.is_online
             try:
                 response = requests.get(site.url, timeout=10)
+                is_success = False
+                
                 if response.status_code == 200:
-                    # Content Verification
                     if site.expected_text:
                         if site.expected_text in response.text:
-                            site.is_online = True
-                            site.error_message = None
+                            is_success = True
                         else:
-                            site.is_online = False
-                            site.error_message = f"Texto esperado '{site.expected_text}' não encontrado."
+                            is_success = False
+                            error_msg = f"Texto esperado '{site.expected_text}' não encontrado."
                     else:
-                        site.is_online = True
-                        site.error_message = None
+                        is_success = True
                 else:
-                    site.is_online = False
-                    site.error_message = f"Status Code: {response.status_code}"
+                    is_success = False
+                    error_msg = f"Status Code: {response.status_code}"
+
+                if is_success:
+                    # Success State
+                    site.status = 'online'
+                    site.first_failure_time = None
+                    site.error_message = None
+                else:
+                    # Failure State
+                    site.error_message = error_msg
+                    
+                    if site.first_failure_time is None:
+                        # First failure detected
+                        site.first_failure_time = datetime.now()
+                        site.status = 'warning' # Orange
+                    else:
+                        # Successive failure
+                        time_diff = datetime.now() - site.first_failure_time
+                        if time_diff.total_seconds() >= 300: # 5 minutes
+                            # Failure persisted for > 5 mins
+                            previous_status = site.status
+                            site.status = 'offline' # Red
+                            
+                            # Send Alert only if transitioning to offline for the first time
+                            if previous_status != 'offline':
+                                send_alert_email(site)
+                        else:
+                            # Still in warning period
+                            site.status = 'warning'
+
             except Exception as e:
-                site.is_online = False
+                # Exception Handling
                 site.error_message = str(e)
+                if site.first_failure_time is None:
+                    site.first_failure_time = datetime.now()
+                    site.status = 'warning'
+                else:
+                    time_diff = datetime.now() - site.first_failure_time
+                    if time_diff.total_seconds() >= 300:
+                        previous_status = site.status
+                        site.status = 'offline'
+                        if previous_status != 'offline':
+                            send_alert_email(site)
+                    else:
+                        site.status = 'warning'
             
             site.last_checked = datetime.now()
-            
-            # Email Notification Logic
-            if previous_status and not site.is_online:
-                send_alert_email(site)
             
         db.session.commit()
 
@@ -87,10 +123,10 @@ def send_alert_email(site):
 
     for recipient in recipients:
         msg = EmailMessage()
-        msg['Subject'] = f"ALERT: {site.name} is DOWN"
+        msg['Subject'] = f"ALERT: {site.name} is OFFLINE"
         msg['From'] = email_user
         msg['To'] = recipient
-        msg.set_content(f"The site {site.name} ({site.url}) appears to be down.\n\nTime: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\nError: {site.error_message}")
+        msg.set_content(f"The site {site.name} ({site.url}) has been down for more than 5 minutes.\n\nTime: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\nError: {site.error_message}")
 
         try:
             with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
