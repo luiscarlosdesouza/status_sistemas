@@ -170,6 +170,22 @@ def delete_site(id):
         db.session.commit()
     return redirect(url_for('admin'))
 
+@app.route('/site/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
+def edit_site(id):
+    site = Site.query.get(id)
+    if request.method == 'POST':
+        site.name = request.form.get('name')
+        site.url = request.form.get('url')
+        if not site.url.startswith(('http://', 'https://')):
+            site.url = 'https://' + site.url
+        site.expected_text = request.form.get('expected_text')
+        db.session.commit()
+        # Re-check immediately
+        check_sites()
+        return redirect(url_for('admin'))
+    return render_template('edit_site.html', site=site)
+
 # --- Init DB ---
 def init_db():
     with app.app_context():

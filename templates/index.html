@@ -10,7 +10,7 @@
                 <h5 class="card-title">{{ site.name }}</h5>
                 <p class="card-text text-muted small">{{ site.url }}</p>
 
-                {% if site.is_online %}
+                {% if site.status == 'online' %}
                 <div class="alert alert-success d-flex align-items-center justify-content-center" role="alert">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
                         class="bi bi-check-circle-fill me-2" viewBox="0 0 16 16">
@@ -19,6 +19,19 @@
                     </svg>
                     ONLINE
                 </div>
+                {% elif site.status == 'warning' %}
+                <div class="alert alert-warning d-flex align-items-center justify-content-center" role="alert">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"
+                        class="bi bi-exclamation-circle-fill me-2" viewBox="0 0 16 16">
+                        <path
+                            d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zM8 4a.905.905 0 0 0-.9.995l.35 3.507a.552.552 0 0 0 1.1 0l.35-3.507A.905.905 0 0 0 8 4zm.002 6a1 1 0 1 0 0 2 1 1 0 0 0 0-2z" />
+                    </svg>
+                    ATENÇÃO
+                </div>
+                <p class="text-warning small mb-0">Instabilidade detectada...</p>
+                {% if site.first_failure_time %}
+                <p class="text-muted small">Desde: {{ site.first_failure_time.strftime('%H:%M:%S') }}</p>
+                {% endif %}
                 {% else %}
                 <div class="alert alert-danger d-flex align-items-center justify-content-center" role="alert">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor"

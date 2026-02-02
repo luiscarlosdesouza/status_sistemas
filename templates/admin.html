@@ -45,17 +45,24 @@
                     <td><a href="{{ site.url }}" target="_blank">{{ site.url }}</a></td>
                     <td><small class="text-muted">{{ site.expected_text if site.expected_text else '-' }}</small></td>
                     <td>
-                        {% if site.is_online %}
+                    <td>
+                        {% if site.status == 'online' %}
                         <span class="badge bg-success">Online</span>
+                        {% elif site.status == 'warning' %}
+                        <span class="badge bg-warning text-dark">Atenção</span>
                         {% else %}
                         <span class="badge bg-danger">Offline</span>
                         {% endif %}
                     </td>
                     <td>
-                        <form method="POST" action="/site/delete/{{ site.id }}"
-                            onsubmit="return confirm('Tem certeza que deseja remover este site?');">
-                            <button type="submit" class="btn btn-sm btn-danger">Excluir</button>
-                        </form>
+                        <div class="btn-group">
+                            <a href="/site/edit/{{ site.id }}" class="btn btn-sm btn-primary">Editar</a>
+                            <form method="POST" action="/site/delete/{{ site.id }}"
+                                onsubmit="return confirm('Tem certeza que deseja remover este site?');"
+                                style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-danger ms-1">Excluir</button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
                 {% else %}

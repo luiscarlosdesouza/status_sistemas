@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4>Editar Site</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Nome do Sistema</label>
+                        <input type="text" class="form-control" name="name" value="{{ site.name }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">URL</label>
+                        <input type="text" class="form-control" name="url" value="{{ site.url }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Texto Esperado (Opcional)</label>
+                        <input type="text" class="form-control" name="expected_text"
+                            value="{{ site.expected_text if site.expected_text }}">
+                        <div class="form-text">Deixe em branco para verificar apenas se o site está online (Status 200).
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success">Salvar Alterações</button>
+                        <a href="/admin" class="btn btn-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
