@@ -15,5 +15,7 @@ services:
       - EMAIL_TO=${EMAIL_TO}
       - EMAIL_SMTP_SERVER=${EMAIL_SMTP_SERVER}
       - EMAIL_SMTP_PORT=${EMAIL_SMTP_PORT}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - TZ=America/Sao_Paulo
     restart: always
