@@ -7,8 +7,10 @@ Sistema simples para monitoramento de sites e serviços web, com dashboard de st
 - Dashboard público com status (Online/Atenção/Offline).
 - Sistema de "Farol" para evitar falsos positivos (intermitência).
 - Verificação de "Texto Esperado" para garantir que o site carregou corretamente.
-- Verificação automática a cada 60 minutos (configurável).
-- Notificação por e-mail apenas se o site ficar offline por mais de 15 minutos.
+- **[NOVO] Agendamento Dinâmico**: Intervalos diferentes para dias de semana (ex: 60 min) e fim de semana (ex: 120 min).
+- **[NOVO] Notificação de Recuperação**: Avisa por e-mail quando o site volta ao ar.
+- **[NOVO] Relatórios**: Histórico detalhado de falhas (início, fim e duração).
+- **[NOVO] Configurações Globais**: Painel administrativo para alterar e-mails e intervalos sem mexer em código.
 - Interface administrativa para adicionar/editar/remover sites.
 - Login seguro para área administrativa.
 - Deploy simplificado com Docker.
@@ -29,6 +31,10 @@ Para evitar que qualquer oscilação na rede envie e-mails desnecessários, o si
     - O site continua falhando consecutivamente.
     - Se o tempo desde a primeira falha for maior que **15 minutos**, o status muda para Offline.
     - **E-mail de Alerta é enviado** para a lista de contatos.
+
+4.  **🟢 Recuperação (Volta ao Verde)**:
+    - Se o site estava Offline e volta a responder com sucesso.
+    - **E-mail de Recuperação é enviado** avisando que o serviço normalizou.
 
 *Resumo: O sistema verifica a cada 1 hora. Se falhar, você será avisado na próxima checagem (se continuar falhando).*
 
@@ -57,7 +63,10 @@ O campo **Texto Esperado** resolve isso.
     - Para receber alertas por e-mail, edite o arquivo `docker-compose.yml`.
     - `EMAIL_USER`: Seu e-mail do Gmail.
     - `EMAIL_PASSWORD`: Senha de App do Google (Não é sua senha normal).
-    - `EMAIL_TO`: O e-mail que receberá os alertas. Para múltiplos e-mails, separe por vírgula (ex: `email1@usp.br, email2@usp.br`).
+    - `EMAIL_TO`: O e-mail que receberá os alertas. Para múltiplos e-mails, separe por vírgula.
+    - `EMAIL_SMTP_SERVER` (Opcional): Padrão `smtp.gmail.com`.
+    - `EMAIL_SMTP_PORT` (Opcional): Padrão `465` (SSL).
+
 
 2.  **Subir o Sistema**
     Execute o comando na raiz do projeto:
@@ -128,26 +137,34 @@ Se você quer levar **este sistema exato** (com o banco de dados já preenchido 
 - `templates/`: Arquivos HTML (Bootstrap).
 - `sites.db`: Banco de dados SQLite (gerado automaticamente).
 
-## Guia de Configuração (Desenvolvedores)
+## Guia de Configuração (Interface Gráfica)
 
-Se você precisa alterar os intervalos de tempo padrão, edite o arquivo `app.py`:
+**Não é mais necessário editar código para mudar configurações!**
 
-### 1. Alterar Intervalo de Checagem
-Procure o final do arquivo `app.py`:
-```python
-# Start Scheduler
-scheduler = BackgroundScheduler()
-# Altere 'minutes=60' para o valor desejado (ex: minutes=5)
-scheduler.add_job(func=check_sites, trigger="interval", minutes=60)
+Acesse o painel administrativo (`/admin`) e clique no botão **Configurações**. Lá você pode alterar:
+
+1.  **E-mail e SMTP**:
+    - Alterar remetente, senha de app, servidores SMTP e lista de destinatários.
+2.  **Frequência de Monitoramento**:
+    - **Dia de Semana**: Intervalo em minutos para checagem de Seg-Sex (Padrão: 60 min).
+    - **Fim de Semana**: Intervalo em minutos para checagem de Sáb-Dom (Padrão: 120 min).
+    - **Tempo para Alerta**: Quantos minutos de falha contínua antes de considerar Offline (Padrão: 15 min).
+
+---
+
+## Guia do Desenvolvedor (Técnico)
+
+### Variáveis de Ambiente (.env)
+O sistema lê as configurações iniciais do arquivo `.env` apenas na primeira execução para preencher o banco de dados. Depois disso, as configurações valem o que estiver no banco (editável pela interface).
+
+Arquivo `.env` (Use o `.env-example` como base):
+```env
+SECRET_KEY=sua-chave-secreta
+ADMIN_PASSWORD=senha-admin
+EMAIL_USER=seu-email@gmail.com
+EMAIL_PASSWORD=sua-senha-app
+EMAIL_TO=destino1@usp.br,destino2@usp.br
 ```
-
-### 2. Alterar Tempo de Espera para Alerta (15 min)
-Procure a função `check_sites` e o bloco de verificação de tempo:
-```python
-# Altere '900' (segundos) para o valor desejado (ex: 300 para 5 minutos)
-if time_diff.total_seconds() >= 900: # 15 minutes
-```
-*Nota: Lembre-se de alterar este valor em dois lugares dentro da função `check_sites` (no bloco `else` e no bloco `except`).*
 
 ## GitHub
 

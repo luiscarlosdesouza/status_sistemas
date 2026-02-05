@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Relatório de Falhas</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <!-- Future: Export Button -->
+    </div>
+</div>
+
+<div class="card shadow">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Site</th>
+                        <th>Início da Falha</th>
+                        <th>Fim da Falha</th>
+                        <th>Duração Indisponibilidade</th>
+                        <th>Erro Registrado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in history %}
+                    <tr>
+                        <td>
+                            <strong>{{ item.site_name }}</strong><br>
+                            <small class="text-muted"><a href="{{ item.url }}" target="_blank">{{ item.url
+                                    }}</a></small>
+                        </td>
+                        <td>{{ item.start_time.strftime('%d/%m/%Y %H:%M:%S') }}</td>
+                        <td>
+                            {% if item.end_time %}
+                            {{ item.end_time.strftime('%d/%m/%Y %H:%M:%S') }}
+                            {% else %}
+                            <span class="badge bg-danger">Em andamento</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ item.duration }}</td>
+                        <td class="text-danger"><small>{{ item.error }}</small></td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted py-4">Nenhum evento de falha registrado.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

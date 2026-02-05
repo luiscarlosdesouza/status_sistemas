@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">Configurações Gerais</h4>
+            </div>
+            <div class="card-body">
+                {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                <div class="alert alert-success">
+                    {{ messages[0] }}
+                </div>
+                {% endif %}
+                {% endwith %}
+
+                <form method="POST">
+                    <h5 class="text-primary mt-3 mb-3">Notificações por E-mail</h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">E-mail Remetente (Gmail)</label>
+                            <input type="email" class="form-control" name="email_user"
+                                value="{{ settings.email_user or '' }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Senha de App</label>
+                            <input type="password" class="form-control" name="email_password"
+                                placeholder="Preencha apenas para alterar">
+                            <small class="text-muted">Deixe em branco para manter a atual.</small>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">E-mails Destinatários (separar por vírgula)</label>
+                        <input type="text" class="form-control" name="email_to" value="{{ settings.email_to or '' }}">
+                    </div>
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label">Servidor SMTP</label>
+                            <input type="text" class="form-control" name="smtp_server"
+                                value="{{ settings.smtp_server }}">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Porta SMTP</label>
+                            <input type="number" class="form-control" name="smtp_port" value="{{ settings.smtp_port }}">
+                        </div>
+                    </div>
+
+                    <h5 class="text-primary mt-4 mb-3">Frequência de Monitoramento</h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Dia de Semana (Minutos)</label>
+                            <input type="number" class="form-control" name="interval_weekday"
+                                value="{{ settings.interval_weekday }}">
+                            <div class="form-text">Intervalo entre checagens de Seg a Sex.</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Fim de Semana (Minutos)</label>
+                            <input type="number" class="form-control" name="interval_weekend"
+                                value="{{ settings.interval_weekend }}">
+                            <div class="form-text">Intervalo entre checagens de Sáb e Dom.</div>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">Tempo para Alerta (Minutos)</label>
+                        <input type="number" class="form-control" name="alert_threshold"
+                            value="{{ settings.alert_threshold }}">
+                        <div class="form-text">Tempo que o site deve ficar offline antes de enviar e-mail.</div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Salvar Configurações</button>
+                        <a href="/admin" class="btn btn-secondary">Voltar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
