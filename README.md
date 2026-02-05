@@ -35,6 +35,7 @@ O sistema agora segue uma arquitetura modular:
     - Níveis de acesso: **Admin** (Gerencia tudo) e **Operador** (Apenas visualiza e gerencia sites).
     - Cadastro de múltiplos usuários com Nome e E-mail.
 - **[NOVO V1.1] Login com Google**: Suporte a OAuth 2.0 para login seguro.
+- **[NOVO V2.0] Login Senha Única USP**: Integração com OAuth 1.0a para autenticação institucional.
 - **[NOVO V1.1] Perfil de Usuário**: Alteração de senha obrigatória no primeiro acesso e edição de dados próprios.
 - Interface administrativa para adicionar/editar/remover sites.
 - Deploy simplificado com Docker.
@@ -88,7 +89,10 @@ O campo **Texto Esperado** resolve isso.
     - Copie o arquivo `.env-example` para `.env`:
     - `EMAIL_USER`: Seu e-mail do Gmail.
     - `EMAIL_PASSWORD`: Senha de App do Google.
+    - `EMAIL_PASSWORD`: Senha de App do Google.
     - `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET`: Credenciais OAuth 2.0 (Para login com Google).
+    - `USP_CLIENT_KEY` e `USP_CLIENT_SECRET`: Credenciais OAuth 1.0a (Para Senha Única).
+    - `USP_CALLBACK_ID`: ID do callback (Geralmente 63 para produção / 64 para localhost).
     
     *Nota: A lista de e-mails para notificação agora é gerenciada dentro do sistema, no cadastro de Usuários.*
 
@@ -254,6 +258,7 @@ Se a atualização envolver mudanças na estrutura do banco (ex: novos campos), 
 
 ### Versão 2.0 (Atual)
 - **Refatoração Completa**: Migração de `app.py` monolítico para arquitetura de **Blueprints**.
+- **Senha Única USP**: Implementação de login OAuth 1.0a com suporte a configuração dinâmica de callback.
 - **Services Pattern**: Lógica de monitoramento desacoplada das rotas.
 - **Factory Pattern**: Uso de `create_app` para melhor gerenciamento de contexto e testes.
 
