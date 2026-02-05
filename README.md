@@ -4,12 +4,46 @@ Sistema simples para monitoramento de sites e serviços web, com dashboard de st
 
 ## Funcionalidades
 
-- Dashboard público com status (Online/Offline) e tempo de resposta.
-- Verificação automática a cada 5 minutos.
-- Notificação por e-mail quando um site sai do ar.
-- Interface administrativa para adicionar/remover sites.
+- Dashboard público com status (Online/Atenção/Offline).
+- Sistema de "Farol" para evitar falsos positivos (intermitência).
+- Verificação de "Texto Esperado" para garantir que o site carregou corretamente.
+- Verificação automática a cada 60 minutos (configurável).
+- Notificação por e-mail apenas se o site ficar offline por mais de 15 minutos.
+- Interface administrativa para adicionar/editar/remover sites.
 - Login seguro para área administrativa.
 - Deploy simplificado com Docker.
+
+## Lógica de Monitoramento (Sistema de Farol)
+
+Para evitar que qualquer oscilação na rede envie e-mails desnecessários, o sistema utiliza uma lógica de 3 estágios:
+
+1.  **🟢 Online (Verde)**:
+    - O site respondeu com status 200 (OK) E (opcionalmente) contém o texto esperado.
+
+2.  **🟠 Atenção (Laranja)**:
+    - O site falhou na verificação.
+    - O sistema registra o horário da primeira falha.
+    - **Nenhum e-mail é enviado ainda.** O sistema aguarda para ver se é apenas uma instabilidade passageira.
+
+3.  **🔴 Offline (Vermelho)**:
+    - O site continua falhando consecutivamente.
+    - Se o tempo desde a primeira falha for maior que **15 minutos**, o status muda para Offline.
+    - **E-mail de Alerta é enviado** para a lista de contatos.
+
+*Resumo: O sistema verifica a cada 1 hora. Se falhar, você será avisado na próxima checagem (se continuar falhando).*
+
+## Verificação de "Texto Esperado"
+
+Muitas vezes, quando um sistema cai, o servidor web (Nginx/Apache) continua no ar entregando uma página de erro genérica ("502 Bad Gateway" ou "Service Unavailable"). Para um monitoramento simples, isso parece "Online" (o servidor respondeu).
+
+O campo **Texto Esperado** resolve isso.
+
+- **Como funciona**: O sistema busca por uma palavra ou frase específica dentro da página do site.
+- **O que escrever**: Escolha algo único que sempre aparece quando o site está funcionando.
+    - Exemplo (Sistema de Login): `Senha` ou `Esqueci minha senha`.
+    - Exemplo (Portal): `Bem-vindo ao Sistema`.
+    - Exemplo (API): `{"status": "ok"}`.
+- **Configuração**: Ao adicionar ou editar um site no Admin, preencha este campo. Se deixar em branco, o sistema validará apenas o código HTTP 200.
 
 ## Como Rodar
 
@@ -93,6 +127,27 @@ Se você quer levar **este sistema exato** (com o banco de dados já preenchido 
 - `app.py`: Lógica principal (Flask, Banco de Dados, Scheduler).
 - `templates/`: Arquivos HTML (Bootstrap).
 - `sites.db`: Banco de dados SQLite (gerado automaticamente).
+
+## Guia de Configuração (Desenvolvedores)
+
+Se você precisa alterar os intervalos de tempo padrão, edite o arquivo `app.py`:
+
+### 1. Alterar Intervalo de Checagem
+Procure o final do arquivo `app.py`:
+```python
+# Start Scheduler
+scheduler = BackgroundScheduler()
+# Altere 'minutes=60' para o valor desejado (ex: minutes=5)
+scheduler.add_job(func=check_sites, trigger="interval", minutes=60)
+```
+
+### 2. Alterar Tempo de Espera para Alerta (15 min)
+Procure a função `check_sites` e o bloco de verificação de tempo:
+```python
+# Altere '900' (segundos) para o valor desejado (ex: 300 para 5 minutos)
+if time_diff.total_seconds() >= 900: # 15 minutes
+```
+*Nota: Lembre-se de alterar este valor em dois lugares dentro da função `check_sites` (no bloco `else` e no bloco `except`).*
 
 ## GitHub
 
