@@ -1,20 +1,24 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monitor Sites IME-USP</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <style>
         .status-card {
             transition: transform 0.2s;
         }
+
         .status-card:hover {
             transform: scale(1.02);
         }
     </style>
 </head>
+
 <body class="bg-light">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
         <div class="container">
@@ -23,21 +27,50 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav ms-auto align-items-center">
                     <li class="nav-item">
                         <a class="nav-link" href="/">Dashboard</a>
                     </li>
                     {% if current_user.is_authenticated %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="/admin">Administração</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-danger" href="/logout">Sair</a>
-                        </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/admin">Sites</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="False">
+                            <span class="text-light">
+                                <i class="bi bi-person-circle"></i>
+                                Olá, {{ current_user.name or current_user.username }}
+                                <span class="badge bg-secondary rounded-pill" style="font-size: 0.7em;">{{
+                                    current_user.role|capitalize }}</span>
+                            </span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('profile') }}"><i
+                                        class="bi bi-person-gear"></i> Meu Perfil</a></li>
+                            {% if current_user.role == 'admin' %}
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li>
+                                <h6 class="dropdown-header">Administração</h6>
+                            </li>
+                            <li><a class="dropdown-item" href="{{ url_for('users') }}"><i class="bi bi-people"></i>
+                                    Usuários</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('settings') }}"><i class="bi bi-gear"></i>
+                                    Configurações</a></li>
+                            {% endif %}
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item text-danger" href="/logout"><i
+                                        class="bi bi-box-arrow-right"></i> Sair</a></li>
+                        </ul>
+                    </li>
                     {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="/login">Login</a>
-                        </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">Login</a>
+                    </li>
                     {% endif %}
                 </ul>
             </div>
@@ -46,14 +79,14 @@
 
     <div class="container">
         {% with messages = get_flashed_messages() %}
-            {% if messages %}
-                <div class="alert alert-warning alert-dismissible fade show" role="alert">
-                    {{ messages[0] }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            {% endif %}
+        {% if messages %}
+        <div class="alert alert-warning alert-dismissible fade show" role="alert">
+            {{ messages[0] }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endif %}
         {% endwith %}
-        
+
         {% block content %}{% endblock %}
     </div>
 
@@ -61,4 +94,5 @@
         <small>&copy; 2026 IME-USP</small>
     </footer>
 </body>
+
 </html>

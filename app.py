@@ -10,6 +10,8 @@ import requests
 import atexit
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
+from sqlalchemy import text
+from authlib.integrations.flask_client import OAuth
 
 load_dotenv()
 
@@ -23,11 +25,32 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
+# OAuth Config
+oauth = OAuth(app)
+google = oauth.register(
+    name='google',
+    client_id=os.getenv('GOOGLE_CLIENT_ID'),
+    client_secret=os.getenv('GOOGLE_CLIENT_SECRET'),
+    access_token_url='https://accounts.google.com/o/oauth2/token',
+    access_token_params=None,
+    authorize_url='https://accounts.google.com/o/oauth2/auth',
+    authorize_params=None,
+    api_base_url='https://www.googleapis.com/oauth2/v1/',
+    userinfo_endpoint='https://openidconnect.googleapis.com/v1/userinfo',
+    client_kwargs={'scope': 'openid email profile'},
+)
+
 # --- Models ---
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
+    # New V1.1 Fields
+    name = db.Column(db.String(100), nullable=True)
+    email = db.Column(db.String(100), unique=True, nullable=True)
+    role = db.Column(db.String(20), default='operator') # 'admin' or 'operator'
+    is_default_password = db.Column(db.Boolean, default=True)
+    receive_notifications = db.Column(db.Boolean, default=False)
 
 class Site(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -166,11 +189,17 @@ def check_sites():
         db.session.commit()
 
 def send_alert_email(site, settings):
-    if not (settings.email_user and settings.email_password and settings.email_to):
-        print("Email configuration missing in Settings. Notification skipped.")
+    if not (settings.email_user and settings.email_password):
+        print("Email configuration (User/Pass) missing in Settings. Notification skipped.")
         return
 
-    recipients = [e.strip() for e in settings.email_to.split(',')]
+    # Fetch users who want notifications
+    users_to_notify = User.query.filter_by(receive_notifications=True).all()
+    recipients = [u.email for u in users_to_notify if u.email]
+    
+    if not recipients:
+        print("No users configured to receive notifications.")
+        return
 
     try:
         smtp_port = int(settings.smtp_port) if settings.smtp_port else 465
@@ -199,10 +228,15 @@ def send_alert_email(site, settings):
             print(f"Failed to send email to {recipient}: {e}")
 
 def send_recovery_email(site, settings):
-    if not (settings.email_user and settings.email_password and settings.email_to):
+    if not (settings.email_user and settings.email_password):
         return
 
-    recipients = [e.strip() for e in settings.email_to.split(',')]
+    # Fetch users who want notifications
+    users_to_notify = User.query.filter_by(receive_notifications=True).all()
+    recipients = [u.email for u in users_to_notify if u.email]
+
+    if not recipients:
+        return
 
     try:
         smtp_port = int(settings.smtp_port) if settings.smtp_port else 465
@@ -249,6 +283,9 @@ def index():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('users')) # Redirect to users or index
+        
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
@@ -256,11 +293,46 @@ def login():
         
         if user and check_password_hash(user.password_hash, password):
             login_user(user)
-            return redirect(url_for('admin'))
+            if user.is_default_password:
+                flash('Por favor, redefina sua senha.', 'warning')
+                return redirect(url_for('profile'))
+            return redirect(url_for('index'))
         else:
-            flash('Login failed. Check username and password.')
+            flash('Usuário ou senha inválidos.', 'danger')
             
     return render_template('login.html')
+
+@app.route('/login/google')
+def google_login():
+    redirect_uri = url_for('google_authorize', _external=True)
+    return google.authorize_redirect(redirect_uri)
+
+@app.route('/login/google/callback')
+def google_authorize():
+    try:
+        token = google.authorize_access_token()
+        resp = google.get('userinfo')
+        user_info = resp.json()
+        email = user_info['email']
+        name = user_info.get('name', email.split('@')[0])
+        
+        # Check if user exists by email
+        user = User.query.filter_by(email=email).first()
+        
+        if not user:
+            # Check if admin authorized this domain/email (Security Check can be added here)
+            # For now, we only allow if the Admin pre-registered the email OR we auto-create if configured.
+            flash(f'Acesso negado. O e-mail {email} não está cadastrado no sistema.', 'danger')
+            return redirect(url_for('login'))
+        
+        # Log in the user
+        login_user(user)
+        flash(f'Bem-vindo, {user.name or name}!', 'success')
+        
+        return redirect(url_for('index'))
+    except Exception as e:
+        flash(f'Erro no login com Google: {str(e)}', 'danger')
+        return redirect(url_for('login'))
 
 @app.route('/logout')
 @login_required
@@ -346,6 +418,9 @@ def reports():
 @app.route('/settings', methods=['GET', 'POST'])
 @login_required
 def settings():
+    if current_user.role != 'admin':
+        flash('Acesso negado. Apenas administradores podem acessar configurações globais.', 'danger')
+        return redirect(url_for('index'))
     settings = GlobalSettings.query.first()
     if request.method == 'POST':
         settings.email_user = request.form.get('email_user')
@@ -355,7 +430,6 @@ def settings():
         settings.smtp_server = request.form.get('smtp_server')
         settings.smtp_port = int(request.form.get('smtp_port'))
         settings.interval_weekday = int(request.form.get('interval_weekday'))
-        settings.interval_weekend = int(request.form.get('interval_weekend'))
         settings.alert_threshold = int(request.form.get('alert_threshold'))
         db.session.commit()
         flash('Configurações atualizadas com sucesso!')
@@ -363,14 +437,207 @@ def settings():
         
     return render_template('settings.html', settings=settings)
 
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    if request.method == 'POST':
+        # Update Name/Email
+        current_user.name = request.form.get('name')
+        current_user.email = request.form.get('email')
+        
+        # Password Change
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+        
+        if new_password:
+            if new_password != confirm_password:
+                flash('Novas senhas não conferem.', 'danger')
+                return redirect(url_for('profile'))
+            
+            current_user.password_hash = generate_password_hash(new_password, method='pbkdf2:sha256')
+            current_user.is_default_password = False
+            flash('Senha alterada com sucesso!', 'success')
+        
+        db.session.commit()
+        flash('Perfil atualizado com sucesso!', 'success')
+        return redirect(url_for('profile'))
+        
+    return render_template('profile.html', user=current_user)
+
+    return render_template('settings.html', settings=settings)
+
+# --- User Management Routes ---
+
+@app.route('/users')
+@login_required
+def users():
+    # Only Admin can access
+    if current_user.role != 'admin':
+        flash('Acesso negado. Apenas administradores podem gerenciar usuários.', 'danger')
+        return redirect(url_for('index'))
+    
+    all_users = User.query.all()
+    return render_template('users.html', users=all_users)
+
+@app.route('/users/add', methods=['GET', 'POST'])
+@app.route('/users/edit/<int:user_id>', methods=['GET', 'POST'])
+@login_required
+def edit_user(user_id=None):
+    if current_user.role != 'admin':
+        flash('Acesso negado.', 'danger')
+        return redirect(url_for('index'))
+        
+    user = User.query.get(user_id) if user_id else None
+    
+    if request.method == 'POST':
+        # Password Reset Logic
+        if request.form.get('reset_password'):
+            import secrets
+            temp_pass = secrets.token_urlsafe(8)
+            user.password_hash = generate_password_hash(temp_pass, method='pbkdf2:sha256')
+            user.is_default_password = True
+            db.session.commit()
+            flash(f'Senha redefinida! Nova senha temporária: {temp_pass}', 'warning')
+            return redirect(url_for('edit_user', user_id=user.id))
+
+        name = request.form.get('name')
+        email = request.form.get('email')
+        role = request.form.get('role')
+        receive_notifications = 'receive_notifications' in request.form
+        
+        if user:
+            # Update
+            user.name = name
+            user.email = email
+            user.role = role
+            user.receive_notifications = receive_notifications
+            db.session.commit()
+            flash('Usuário atualizado com sucesso!', 'success')
+            return redirect(url_for('users'))
+        else:
+            # Create
+            username = request.form.get('username')
+            if User.query.filter_by(username=username).first():
+                flash('Nome de usuário já existe.', 'danger')
+                return render_template('edit_user.html', user=None)
+            
+            import secrets
+            temp_pass = secrets.token_urlsafe(8)
+            hashed = generate_password_hash(temp_pass, method='pbkdf2:sha256')
+            
+            new_user = User(
+                username=username,
+                password_hash=hashed,
+                name=name,
+                email=email,
+                role=role,
+                is_default_password=True,
+                receive_notifications=receive_notifications
+            )
+            db.session.add(new_user)
+            db.session.commit()
+            flash(f'Usuário criado! Senha temporária: {temp_pass}', 'success')
+            return redirect(url_for('users'))
+
+    return render_template('edit_user.html', user=user)
+
+@app.route('/users/delete/<int:user_id>', methods=['POST'])
+@login_required
+def delete_user(user_id):
+    if current_user.role != 'admin':
+        flash('Acesso negado.', 'danger')
+        return redirect(url_for('users'))
+        
+    user = User.query.get(user_id)
+    if user:
+        if user.username == 'admin':
+            flash('Não é possível excluir o administrador principal.', 'danger')
+        elif user.id == current_user.id:
+            flash('Você não pode excluir a si mesmo.', 'danger')
+        else:
+            db.session.delete(user)
+            db.session.commit()
+            flash('Usuário excluído.', 'success')
+    return redirect(url_for('users'))
+
+def check_and_add_column(table_name, column_name, column_type, default_value=None):
+    with db.engine.connect() as conn:
+        # Check if column exists
+        result = conn.execute(text(f"PRAGMA table_info({table_name})"))
+        columns = [row[1] for row in result.fetchall()]
+        
+        if column_name not in columns:
+            print(f"Migrating: Adding {column_name} to {table_name}")
+            try:
+                # Add column
+                alter_query = f"ALTER TABLE {table_name} ADD COLUMN {column_name} {column_type}"
+                conn.execute(text(alter_query))
+                
+                # Update default values if provided
+                if default_value is not None:
+                    if isinstance(default_value, str):
+                        update_query = f"UPDATE {table_name} SET {column_name} = '{default_value}'"
+                    else:
+                        update_query = f"UPDATE {table_name} SET {column_name} = {default_value}"
+                    conn.execute(text(update_query))
+                
+                conn.commit()
+            except Exception as e:
+                print(f"Migration error: {e}")
+
 # --- Init DB ---
 def init_db():
     with app.app_context():
+        # Ensure tables exist
         db.create_all()
+        
+        # --- Migrations for V1.1 ---
+        # Add new columns to User table if they don't exist
+        from sqlalchemy import text
+        check_and_add_column('user', 'name', 'VARCHAR(100)', 'Administrador')
+        check_and_add_column('user', 'email', 'VARCHAR(100)')
+        check_and_add_column('user', 'role', 'VARCHAR(20)', 'admin')
+        check_and_add_column('user', 'is_default_password', 'BOOLEAN', 0) # Default to 0 (False) for existing users to avoid forced change
+        check_and_add_column('user', 'receive_notifications', 'BOOLEAN', 1) # Default Admin receives notifications
+
         # Create or update default admin
         admin_pass = os.getenv('ADMIN_PASSWORD', 'admin')
         hashed_pw = generate_password_hash(admin_pass, method='pbkdf2:sha256')
         
+        admin_user = User.query.filter_by(username='admin').first()
+        if admin_user:
+            # Update existing admin to ensure it has the correct role
+            if not admin_user.role:
+                admin_user.role = 'admin'
+                admin_user.name = 'Administrador'
+                admin_user.receive_notifications = True
+            
+            # Update email if not set, trying to grab from Settings or Env
+            if not admin_user.email:
+                 # Try env first
+                 env_email_to = os.getenv('EMAIL_TO')
+                 if env_email_to:
+                     admin_user.email = env_email_to.split(',')[0].strip()
+            
+            # Only reset password if it matches the default 'admin' hash (optional, but good for safety)
+            # admin_user.password_hash = hashed_pw 
+        else:
+            # Create new admin
+            env_email_to = os.getenv('EMAIL_TO')
+            first_email = env_email_to.split(',')[0].strip() if env_email_to else 'admin@localhost'
+            
+            new_admin = User(
+                username='admin', 
+                password_hash=hashed_pw,
+                name='Administrador',
+                role='admin',
+                email=first_email,
+                is_default_password=True,
+                receive_notifications=True
+            )
+            db.session.add(new_admin)
+            print("Created default Admin user.")
+
         # Init Settings
         settings = GlobalSettings.query.first()
         if not settings:
@@ -386,20 +653,10 @@ def init_db():
             )
             db.session.add(settings)
             print("Created default Global Settings.")
-            db.session.commit()
-        
-        admin_user = User.query.filter_by(username='admin').first()
-        if admin_user:
-            admin_user.password_hash = hashed_pw
-            print(f"Updated admin user password.")
-        else:
-            admin_user = User(username='admin', password_hash=hashed_pw)
-            db.session.add(admin_user)
-            print(f"Created default admin user.")
         
         db.session.commit()
 
 if __name__ == '__main__':
-    # Always run init_db to ensure tables exist (create_all is safe)
+    # Always run init_db to ensure tables/migrations exist
     init_db()
     app.run(host='0.0.0.0', port=5000, debug=True)

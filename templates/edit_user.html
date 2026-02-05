@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-dark text-white">
+                <h4 class="mb-0">{{ 'Editar Usuário' if user else 'Novo Usuário' }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Nome Completo</label>
+                        <input type="text" class="form-control" name="name" value="{{ user.name if user else '' }}"
+                            required>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Nome de Usuário (Login)</label>
+                            <input type="text" class="form-control" name="username"
+                                value="{{ user.username if user else '' }}" {{ 'readonly' if user else 'required' }}>
+                            {% if user %}
+                            <div class="form-text">O nome de usuário não pode ser alterado.</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">E-mail</label>
+                            <input type="email" class="form-control" name="email"
+                                value="{{ user.email if user else '' }}">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Perfil de Acesso</label>
+                        <select class="form-select" name="role">
+                            <option value="operator" {{ 'selected' if user and user.role=='operator' else '' }}>Operador
+                                (Gerencia Sites e Vê Relatórios)</option>
+                            <option value="admin" {{ 'selected' if user and user.role=='admin' else '' }}>Administrador
+                                (Acesso Total)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-4 form-check">
+                        <input type="checkbox" class="form-check-input" name="receive_notifications" id="notif"
+                            {{ 'checked' if (user and user.receive_notifications) else '' }}>
+                        <label class="form-check-label" for="notif">Receber notificações por e-mail de falhas de sites
+                            monitorados?</label>
+                    </div>
+
+                    {% if not user %}
+                    <div class="alert alert-info">
+                        <strong>Nota:</strong> Uma senha aleatória será gerada automaticamente. O usuário deverá
+                        trocá-la no primeiro acesso.
+                    </div>
+                    {% else %}
+                    <div class="mb-4">
+                        <button type="submit" name="reset_password" value="true" class="btn btn-warning btn-sm"
+                            onclick="return confirm('Isso vai redefinir a senha do usuário e exigir que ele a troque no próximo login. Continuar?');">
+                            <i class="bi bi-key"></i> Redefinir Senha
+                        </button>
+                        <small class="text-muted ms-2">Gera uma nova senha temporária.</small>
+                    </div>
+                    {% endif %}
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Salvar Usuário</button>
+                        <a href="{{ url_for('users') }}" class="btn btn-secondary">Cancelar</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

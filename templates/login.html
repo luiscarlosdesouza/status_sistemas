@@ -17,8 +17,13 @@
                         <label for="password" class="form-label">Senha</label>
                         <input type="password" class="form-control" id="password" name="password" required>
                     </div>
-                    <div class="d-grid">
+                    <div class="d-grid gap-2 mb-3">
                         <button type="submit" class="btn btn-primary">Entrar</button>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('google_login') }}" class="btn btn-outline-danger">
+                            <i class="bi bi-google"></i> Entrar com Google
+                        </a>
                     </div>
                 </form>
             </div>
