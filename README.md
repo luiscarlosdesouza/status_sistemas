@@ -1,8 +1,28 @@
-# Monitor de Sites IME-USP
+# Monitor de Sites IME-USP (Versão 2.0)
 
 Sistema simples para monitoramento de sites e serviços web, com dashboard de status e notificações por e-mail.
 
+**Novidade da Versão 2.0**: Arquitetura modular profissional (Blueprints + Application Factory), facilitando a manutenção e escalabilidade.
+
 ## Funcionalidades
+<... keeping existing features ...>
+
+## Estrutura do Projeto (v2.0)
+
+O sistema agora segue uma arquitetura modular:
+
+- `run.py`: Ponto de entrada da aplicação via `Flask Application Factory`.
+- `config.py`: Configurações de ambiente.
+- `app/`: Pacote principal.
+    - `__init__.py`: Inicialização e registro de extensões.
+    - `models.py`: Modelos do Banco de Dados.
+    - `extensions.py`: Instâncias do SQLAlchemy, Migrate, OAuth, etc.
+    - `blueprints/`: Rotas organizadas por contexto (`auth`, `admin`, `main`).
+    - `services/`: Regras de negócio (`monitor_service`, `email_service`).
+    - `templates/`: Arquivos HTML.
+- `migrations/`: Histórico de alterações do banco de dados.
+
+## Guia de Configuração (Interface Gráfica)
 
 - Dashboard público com status (Online/Atenção/Offline).
 - Sistema de "Farol" para evitar falsos positivos (intermitência).
@@ -227,6 +247,20 @@ Se a atualização envolver mudanças na estrutura do banco (ex: novos campos), 
     git pull
     sudo docker-compose up -d --build
     
-    # Aplique a mudança no banco de produção
     sudo docker-compose exec web flask db upgrade
     ```
+
+## Histórico de Versões
+
+### Versão 2.0 (Atual)
+- **Refatoração Completa**: Migração de `app.py` monolítico para arquitetura de **Blueprints**.
+- **Services Pattern**: Lógica de monitoramento desacoplada das rotas.
+- **Factory Pattern**: Uso de `create_app` para melhor gerenciamento de contexto e testes.
+
+### Versão 1.1
+- **Gestão de Usuários**: Perfis Admin/Operador e edição de perfil.
+- **Login Google**: Integração OAuth 2.0.
+- **Migrações**: Implementação do Flask-Migrate.
+
+### Versão 1.0
+- Lógica de Farol, Dashboard, Notificações por E-mail e Relatórios Básicos.
