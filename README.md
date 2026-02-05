@@ -11,8 +11,12 @@ Sistema simples para monitoramento de sites e serviços web, com dashboard de st
 - **[NOVO] Notificação de Recuperação**: Avisa por e-mail quando o site volta ao ar.
 - **[NOVO] Relatórios**: Histórico detalhado de falhas (início, fim e duração).
 - **[NOVO] Configurações Globais**: Painel administrativo para alterar e-mails e intervalos sem mexer em código.
+- **[NOVO V1.1] Gestão de Usuários**:
+    - Níveis de acesso: **Admin** (Gerencia tudo) e **Operador** (Apenas visualiza e gerencia sites).
+    - Cadastro de múltiplos usuários com Nome e E-mail.
+- **[NOVO V1.1] Login com Google**: Suporte a OAuth 2.0 para login seguro.
+- **[NOVO V1.1] Perfil de Usuário**: Alteração de senha obrigatória no primeiro acesso e edição de dados próprios.
 - Interface administrativa para adicionar/editar/remover sites.
-- Login seguro para área administrativa.
 - Deploy simplificado com Docker.
 
 ## Lógica de Monitoramento (Sistema de Farol)
@@ -30,7 +34,7 @@ Para evitar que qualquer oscilação na rede envie e-mails desnecessários, o si
 3.  **🔴 Offline (Vermelho)**:
     - O site continua falhando consecutivamente.
     - Se o tempo desde a primeira falha for maior que **15 minutos**, o status muda para Offline.
-    - **E-mail de Alerta é enviado** para a lista de contatos.
+    - **E-mail de Alerta é enviado** para **todos os usuários configurados para receber notificações**.
 
 4.  **🟢 Recuperação (Volta ao Verde)**:
     - Se o site estava Offline e volta a responder com sucesso.
@@ -56,16 +60,17 @@ O campo **Texto Esperado** resolve isso.
 ### Pré-requisitos
 
 - Docker e Docker Compose instalados.
+- (Opcional) Conta Google Cloud para ativar o Login com Google.
 
 ### Passo a Passo
 
-1.  **Configuração de E-mail (Opcional)**
-    - Para receber alertas por e-mail, edite o arquivo `docker-compose.yml`.
+1.  **Configuração de E-mail e Google (Opcional)**
+    - Copie o arquivo `.env-example` para `.env`:
     - `EMAIL_USER`: Seu e-mail do Gmail.
-    - `EMAIL_PASSWORD`: Senha de App do Google (Não é sua senha normal).
-    - `EMAIL_TO`: O e-mail que receberá os alertas. Para múltiplos e-mails, separe por vírgula.
-    - `EMAIL_SMTP_SERVER` (Opcional): Padrão `smtp.gmail.com`.
-    - `EMAIL_SMTP_PORT` (Opcional): Padrão `465` (SSL).
+    - `EMAIL_PASSWORD`: Senha de App do Google.
+    - `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET`: Credenciais OAuth 2.0 (Para login com Google).
+    
+    *Nota: A lista de e-mails para notificação agora é gerenciada dentro do sistema, no cadastro de Usuários.*
 
 
 2.  **Subir o Sistema**
@@ -201,3 +206,27 @@ Se você fez alterações no código e quer atualizar seu servidor de produção
     sudo docker-compose up -d --build
     ```
     *Nota: Isso atualiza o código, mas mantém seu banco de dados e configurações intactos.*
+
+## Atualizações de Banco de Dados (Migrações)
+
+Se a atualização envolver mudanças na estrutura do banco (ex: novos campos), siga este fluxo:
+
+1.  **No Desenvolvimento (Local)**:
+    ```bash
+    # Se você alterou o models.py, gere a migração:
+    sudo docker-compose exec web flask db migrate -m "Descreva a mudança"
+    
+    # Commit o arquivo criado na pasta migrations/
+    git add migrations/
+    git commit -m "DB Migration"
+    git push
+    ```
+
+2.  **No Servidor de Produção**:
+    ```bash
+    git pull
+    sudo docker-compose up -d --build
+    
+    # Aplique a mudança no banco de produção
+    sudo docker-compose exec web flask db upgrade
+    ```
