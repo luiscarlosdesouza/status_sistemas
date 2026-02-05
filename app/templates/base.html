@@ -22,54 +22,58 @@
 <body class="bg-light">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
         <div class="container">
-            <a class="navbar-brand" href="/">Monitor IME-USP</a>
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('main.index') }}">
+                <i class="bi bi-activity me-2"></i>
+                <span class="fw-bold">Monitor de Sites</span>
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto align-items-center">
+                <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="/">Dashboard</a>
+                        <a class="nav-link" href="{{ url_for('main.index') }}"><i class="bi bi-speedometer2"></i>
+                            Dashboard</a>
                     </li>
                     {% if current_user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link" href="/admin">Sites</a>
+                        <a class="nav-link" href="{{ url_for('admin.dashboard') }}"><i class="bi bi-gear"></i>
+                            Administração</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.reports') }}"><i
+                                class="bi bi-file-earmark-bar-graph"></i> Relatórios</a>
+                    </li>
+                    {% if current_user.role == 'admin' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.users_list') }}"><i class="bi bi-people"></i>
+                            Usuários</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.settings') }}"><i class="bi bi-sliders"></i>
+                            Configurações</a>
+                    </li>
+                    {% endif %}
+                    {% endif %}
+                </ul>
+                <ul class="navbar-nav ms-auto">
+                    {% if current_user.is_authenticated %}
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
-                            data-bs-toggle="dropdown" aria-expanded="False">
-                            <span class="text-light">
-                                <i class="bi bi-person-circle"></i>
-                                Olá, {{ current_user.name or current_user.username }}
-                                <span class="badge bg-secondary rounded-pill" style="font-size: 0.7em;">{{
-                                    current_user.role|capitalize }}</span>
-                            </span>
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-circle"></i> {{ current_user.name or current_user.username }}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                            <li><a class="dropdown-item" href="{{ url_for('profile') }}"><i
-                                        class="bi bi-person-gear"></i> Meu Perfil</a></li>
-                            {% if current_user.role == 'admin' %}
+                            <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}"><i
+                                        class="bi bi-person"></i> Meu Perfil</a></li>
                             <li>
                                 <hr class="dropdown-divider">
                             </li>
-                            <li>
-                                <h6 class="dropdown-header">Administração</h6>
-                            </li>
-                            <li><a class="dropdown-item" href="{{ url_for('users') }}"><i class="bi bi-people"></i>
-                                    Usuários</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('settings') }}"><i class="bi bi-gear"></i>
-                                    Configurações</a></li>
-                            {% endif %}
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <li><a class="dropdown-item text-danger" href="/logout"><i
+                            <li><a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i
                                         class="bi bi-box-arrow-right"></i> Sair</a></li>
                         </ul>
                     </li>
                     {% else %}
-                    <li class="nav-item">
-                        <a class="nav-link" href="/login">Login</a>
                     </li>
                     {% endif %}
                 </ul>

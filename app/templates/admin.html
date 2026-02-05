@@ -26,38 +26,46 @@
     </a>
 </div>
 
+<!-- Add Site Form -->
 <div class="card mb-4">
-    <div class="card-header">Adicionar Novo Site</div>
+    <div class="card-header bg-success text-white">
+        <i class="bi bi-plus-circle"></i> Adicionar Novo Site
+    </div>
     <div class="card-body">
-        <form method="POST" action="/site/add" class="row g-3">
+        <form action="{{ url_for('admin.add_site') }}" method="POST" class="row g-3">
             <div class="col-md-4">
-                <input type="text" class="form-control" name="name" placeholder="Nome do Sistema (ex: Júpiter Web)"
-                    required>
+                <label for="name" class="form-label">Nome do Site</label>
+                <input type="text" class="form-control" name="name" placeholder="Ex: Portal USP" required>
+            </div>
+            <div class="col-md-5">
+                <label for="url" class="form-label">URL Completa</label>
+                <input type="url" class="form-control" name="url" placeholder="https://..." required>
             </div>
             <div class="col-md-3">
-                <input type="text" class="form-control" name="url"
-                    placeholder="URL (ex: https://uspdigital.usp.br/jupiterweb)" required>
+                <label for="expected_text" class="form-label">Texto Esperado (Opcional)</label>
+                <input type="text" class="form-control" name="expected_text" placeholder="Ex: Bem-vindo">
+                <div class="form-text">Valida se o site carregou corretamente.</div>
             </div>
-            <div class="col-md-3">
-                <input type="text" class="form-control" name="expected_text" placeholder="Texto Esperado (Opcional)">
-            </div>
-            <div class="col-md-2">
-                <button type="submit" class="btn btn-success w-100">Adicionar</button>
+            <div class="col-12">
+                <button type="submit" class="btn btn-success">Adicionar Monitoramento</button>
             </div>
         </form>
     </div>
 </div>
 
-<div class="card">
-    <div class="card-header">Sites Cadastrados</div>
-    <div class="card-body p-0">
-        <table class="table table-striped mb-0">
-            <thead>
+<!-- Sites List -->
+<div class="card shadow-sm">
+    <div class="card-header">
+        <i class="bi bi-list-check"></i> Sites Monitorados
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
                 <tr>
                     <th>Nome</th>
                     <th>URL</th>
-                    <th>Texto Validação</th>
                     <th>Status Atual</th>
+                    <th>Última Verificação</th>
                     <th>Ações</th>
                 </tr>
             </thead>
@@ -65,9 +73,7 @@
                 {% for site in sites %}
                 <tr>
                     <td>{{ site.name }}</td>
-                    <td><a href="{{ site.url }}" target="_blank">{{ site.url }}</a></td>
-                    <td><small class="text-muted">{{ site.expected_text if site.expected_text else '-' }}</small></td>
-                    <td>
+                    <td><a href="{{ site.url }}" target="_blank" class="text-decoration-none">{{ site.url }}</a></td>
                     <td>
                         {% if site.status == 'online' %}
                         <span class="badge bg-success">Online</span>
@@ -77,20 +83,18 @@
                         <span class="badge bg-danger">Offline</span>
                         {% endif %}
                     </td>
+                    <td>{{ site.last_checked.strftime('%d/%m %H:%M:%S') if site.last_checked else 'Nunca' }}</td>
                     <td>
-                        <div class="btn-group">
-                            <a href="/site/edit/{{ site.id }}" class="btn btn-sm btn-primary">Editar</a>
-                            <form method="POST" action="/site/delete/{{ site.id }}"
-                                onsubmit="return confirm('Tem certeza que deseja remover este site?');"
-                                style="display:inline;">
-                                <button type="submit" class="btn btn-sm btn-danger ms-1">Excluir</button>
-                            </form>
-                        </div>
+                        <a href="{{ url_for('admin.edit_site', id=site.id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <form action="{{ url_for('admin.delete_site', id=site.id) }}" method="POST" class="d-inline"
+                            onsubmit="return confirm('Tem certeza?');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
                     </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="4" class="text-center text-muted">Nenhum site cadastrado.</td>
                 </tr>
                 {% endfor %}
             </tbody>
