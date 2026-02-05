@@ -172,6 +172,11 @@ def send_alert_email(site, settings):
 
     recipients = [e.strip() for e in settings.email_to.split(',')]
 
+    try:
+        smtp_port = int(settings.smtp_port) if settings.smtp_port else 465
+    except ValueError:
+        smtp_port = 465
+
     for recipient in recipients:
         msg = EmailMessage()
         msg['Subject'] = f"ALERT: {site.name} is OFFLINE"
@@ -180,12 +185,12 @@ def send_alert_email(site, settings):
         msg.set_content(f"The site {site.name} ({site.url}) has been down for more than {settings.alert_threshold} minutes.\n\nTime: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\nError: {site.error_message}")
 
         try:
-            if settings.smtp_port == 465:
-                with smtplib.SMTP_SSL(settings.smtp_server, settings.smtp_port) as smtp:
+            if smtp_port == 465:
+                with smtplib.SMTP_SSL(settings.smtp_server, smtp_port) as smtp:
                     smtp.login(settings.email_user, settings.email_password)
                     smtp.send_message(msg)
             else:
-                with smtplib.SMTP(settings.smtp_server, settings.smtp_port) as smtp:
+                with smtplib.SMTP(settings.smtp_server, smtp_port) as smtp:
                     smtp.starttls()
                     smtp.login(settings.email_user, settings.email_password)
                     smtp.send_message(msg)
@@ -199,6 +204,11 @@ def send_recovery_email(site, settings):
 
     recipients = [e.strip() for e in settings.email_to.split(',')]
 
+    try:
+        smtp_port = int(settings.smtp_port) if settings.smtp_port else 465
+    except ValueError:
+        smtp_port = 465
+
     for recipient in recipients:
         msg = EmailMessage()
         msg['Subject'] = f"RECOVERY: {site.name} is BACK ONLINE"
@@ -207,12 +217,12 @@ def send_recovery_email(site, settings):
         msg.set_content(f"The site {site.name} ({site.url}) is responding again.\n\nTime: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
         try:
-            if settings.smtp_port == 465:
-                with smtplib.SMTP_SSL(settings.smtp_server, settings.smtp_port) as smtp:
+            if smtp_port == 465:
+                with smtplib.SMTP_SSL(settings.smtp_server, smtp_port) as smtp:
                     smtp.login(settings.email_user, settings.email_password)
                     smtp.send_message(msg)
             else:
-                with smtplib.SMTP(settings.smtp_server, settings.smtp_port) as smtp:
+                with smtplib.SMTP(settings.smtp_server, smtp_port) as smtp:
                     smtp.starttls()
                     smtp.login(settings.email_user, settings.email_password)
                     smtp.send_message(msg)
@@ -368,8 +378,8 @@ def init_db():
                 email_user=os.getenv('EMAIL_USER'),
                 email_password=os.getenv('EMAIL_PASSWORD'),
                 email_to=os.getenv('EMAIL_TO'),
-                smtp_server=os.getenv('EMAIL_SMTP_SERVER', 'smtp.gmail.com'),
-                smtp_port=int(os.getenv('EMAIL_SMTP_PORT', 465)),
+                smtp_server=os.getenv('EMAIL_SMTP_SERVER') or 'smtp.gmail.com',
+                smtp_port=int(os.getenv('EMAIL_SMTP_PORT') or 465),
                 interval_weekday=60,
                 interval_weekend=120,
                 alert_threshold=15
