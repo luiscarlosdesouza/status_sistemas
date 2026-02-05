@@ -78,8 +78,8 @@ def check_sites():
                     else:
                         # Successive failure
                         time_diff = datetime.now() - site.first_failure_time
-                        if time_diff.total_seconds() >= 300: # 5 minutes
-                            # Failure persisted for > 5 mins
+                        if time_diff.total_seconds() >= 900: # 15 minutes
+                            # Failure persisted for > 15 mins
                             previous_status = site.status
                             site.status = 'offline' # Red
                             
@@ -98,7 +98,7 @@ def check_sites():
                     site.status = 'warning'
                 else:
                     time_diff = datetime.now() - site.first_failure_time
-                    if time_diff.total_seconds() >= 300:
+                    if time_diff.total_seconds() >= 900:
                         previous_status = site.status
                         site.status = 'offline'
                         if previous_status != 'offline':
@@ -126,7 +126,7 @@ def send_alert_email(site):
         msg['Subject'] = f"ALERT: {site.name} is OFFLINE"
         msg['From'] = email_user
         msg['To'] = recipient
-        msg.set_content(f"The site {site.name} ({site.url}) has been down for more than 5 minutes.\n\nTime: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\nError: {site.error_message}")
+        msg.set_content(f"The site {site.name} ({site.url}) has been down for more than 15 minutes.\n\nTime: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\nError: {site.error_message}")
 
         try:
             with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
@@ -138,7 +138,7 @@ def send_alert_email(site):
 
 # Start Scheduler
 scheduler = BackgroundScheduler()
-scheduler.add_job(func=check_sites, trigger="interval", minutes=1)
+scheduler.add_job(func=check_sites, trigger="interval", minutes=60)
 scheduler.start()
 atexit.register(lambda: scheduler.shutdown())
 
