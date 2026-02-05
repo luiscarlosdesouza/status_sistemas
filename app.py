@@ -460,11 +460,9 @@ def profile():
         
         db.session.commit()
         flash('Perfil atualizado com sucesso!', 'success')
-        return redirect(url_for('profile'))
+        return redirect(url_for('index'))
         
     return render_template('profile.html', user=current_user)
-
-    return render_template('settings.html', settings=settings)
 
 # --- User Management Routes ---
 
