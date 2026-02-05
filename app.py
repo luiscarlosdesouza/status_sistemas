@@ -25,6 +25,12 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
+# Debug Env Vars
+print("--- Startup Check ---")
+print(f"GOOGLE_CLIENT_ID Present: {bool(os.getenv('GOOGLE_CLIENT_ID'))}")
+print(f"GOOGLE_CLIENT_SECRET Present: {bool(os.getenv('GOOGLE_CLIENT_SECRET'))}")
+print("---------------------")
+
 # OAuth Config
 oauth = OAuth(app)
 google = oauth.register(
@@ -306,8 +312,7 @@ def google_login():
 def google_authorize():
     try:
         token = google.authorize_access_token()
-        resp = google.get('userinfo')
-        user_info = resp.json()
+        user_info = google.userinfo() # Uses server_metadata_url endpoint
         email = user_info['email']
         name = user_info.get('name', email.split('@')[0])
         
