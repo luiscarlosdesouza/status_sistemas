@@ -9,3 +9,8 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
     GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
+    
+    # USP Senha Unica
+    USP_CLIENT_KEY = os.environ.get('USP_CLIENT_KEY')
+    USP_CLIENT_SECRET = os.environ.get('USP_CLIENT_SECRET')
+    USP_CALLBACK_ID = os.environ.get('USP_CALLBACK_ID')

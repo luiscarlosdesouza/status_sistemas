@@ -74,6 +74,10 @@
                         </ul>
                     </li>
                     {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.login') }}">
+                            <i class="bi bi-box-arrow-in-right"></i> Entrar
+                        </a>
                     </li>
                     {% endif %}
                 </ul>

@@ -7,8 +7,9 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(100), unique=True, nullable=False)
     password_hash = db.Column(db.String(200), nullable=False)
     name = db.Column(db.String(100), nullable=True)
-    email = db.Column(db.String(100), unique=True, nullable=True)
-    role = db.Column(db.String(20), default='operator') # 'admin' or 'operator'
+    email = db.Column(db.String(120), unique=True, nullable=True)
+    nusp = db.Column(db.String(20), unique=True, nullable=True) # USP Number
+    role = db.Column(db.String(50), default='user') # 'admin' or 'operator'
     is_default_password = db.Column(db.Boolean, default=True)
     receive_notifications = db.Column(db.Boolean, default=False)
 

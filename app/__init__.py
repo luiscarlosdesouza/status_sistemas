@@ -47,6 +47,20 @@ def create_app(config_class=Config):
         server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
         client_kwargs={'scope': 'openid email profile'},
     )
+
+    oauth.register(
+        name='usp',
+        client_id=app.config['USP_CLIENT_KEY'],
+        client_secret=app.config['USP_CLIENT_SECRET'],
+        request_token_url='https://uspdigital.usp.br/wsusuario/oauth/request_token',
+        request_token_params=None,
+        access_token_url='https://uspdigital.usp.br/wsusuario/oauth/access_token',
+        access_token_params=None,
+        authorize_url='https://uspdigital.usp.br/wsusuario/oauth/authorize',
+        authorize_params=None,
+        api_base_url='https://uspdigital.usp.br/wsusuario/oauth/',
+        client_kwargs=None
+    )
     
     # Init DB (One-time check logic)
     # We can use @app.before_first_request (deprecated in Flask 2.3+) or just run it.

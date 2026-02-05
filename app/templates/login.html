@@ -23,8 +23,12 @@
 
                         <div class="text-center my-2">ou</div>
 
-                        <a href="{{ url_for('auth.google_login') }}" class="btn btn-outline-danger">
+                        <a href="{{ url_for('auth.google_login') }}" class="btn btn-outline-danger w-100 mb-2">
                             <i class="bi bi-google me-2"></i> Entrar com Google
+                        </a>
+
+                        <a href="{{ url_for('auth.usp_login') }}" class="btn btn-outline-primary w-100">
+                            <i class="bi bi-bank me-2"></i> Senha Única USP
                         </a>
                     </div>
                 </form>

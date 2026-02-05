@@ -92,6 +92,56 @@ def google_authorize():
         flash(f'Bem-vindo, {user.name or name}!', 'success')
         
         return redirect(url_for('main.index'))
+        return redirect(url_for('main.index'))
     except Exception as e:
         flash(f'Erro no login com Google: {str(e)}', 'danger')
+        return redirect(url_for('auth.login'))
+
+# --- USP Senha Unica OAuth 1.0a ---
+@auth_bp.route('/login/usp')
+def usp_login():
+    redirect_uri = url_for('auth.usp_callback', _external=True)
+    callback_id = current_app.config.get('USP_CALLBACK_ID')
+    return oauth.usp.authorize_redirect(redirect_uri, callback_id=callback_id)
+
+@auth_bp.route('/login/usp/callback')
+def usp_callback():
+    try:
+        token = oauth.usp.authorize_access_token()
+        # USP API to get user info. Example endpoint: 'usuariousp'
+        resp = oauth.usp.post('usuariousp', token=token)
+        user_data = resp.json()
+        
+        # Validar campos retornados (loginUsuario, nomeUsuario, emailPrincipalUsuario)
+        username = user_data.get('loginUsuario')
+        name = user_data.get('nomeUsuario')
+        email = user_data.get('emailPrincipalUsuario')
+        nusp = str(user_data.get('codpes')) # Número USP
+        
+        if not username:
+             raise Exception("Dados de usuário inválidos retornados pela USP.")
+
+        # Check if user exists by nusp or username
+        user = User.query.filter((User.nusp == nusp) | (User.username == username)).first()
+        
+        if not user:
+            # Auto-register or Deny?
+            # Let's simple Check if email matches existing
+            if email:
+                 user = User.query.filter_by(email=email).first()
+            
+            if not user:
+                 flash('Usuário USP não encontrado. Entre em contato com o administrador.', 'danger')
+                 return redirect(url_for('auth.login'))
+        
+        # Update User data if needed
+        if not user.nusp and nusp:
+            user.nusp = nusp
+        
+        login_user(user)
+        flash(f'Bem-vindo, {user.name}!', 'success')
+        return redirect(url_for('main.index'))
+        
+    except Exception as e:
+        flash(f'Erro no login USP: {str(e)}', 'danger')
         return redirect(url_for('auth.login'))
