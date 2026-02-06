@@ -34,7 +34,14 @@ def login():
 @auth_bp.route('/logout')
 @login_required
 def logout():
+    # Logout Flask-Login
     logout_user()
+    
+    # Clear Flask session (IMPORTANT for Authlib to clear oauth tokens)
+    # This prevents token reuse if stored in session
+    from flask import session
+    session.clear()
+    
     return redirect(url_for('main.index'))
 
 @auth_bp.route('/profile', methods=['GET', 'POST'])
@@ -108,9 +115,12 @@ def usp_login():
 def usp_callback():
     try:
         token = oauth.usp.authorize_access_token()
-        # USP API to get user info. Example endpoint: 'usuariousp'
         resp = oauth.usp.post('usuariousp', token=token)
         user_data = resp.json()
+        
+        # DEBUG LOGGING (Temporary)
+        print(f"DEBUG: USP Callback Token: {token}", flush=True)
+        print(f"DEBUG: USP RAW User Data: {user_data}", flush=True)
         
         # Validar campos retornados (loginUsuario, nomeUsuario, emailPrincipalUsuario)
         username = user_data.get('loginUsuario')
@@ -118,11 +128,18 @@ def usp_callback():
         email = user_data.get('emailPrincipalUsuario')
         nusp = str(user_data.get('codpes')) # Número USP
         
+        print(f"DEBUG: Extracted -> Username: {username}, NUSP: {nusp}, Email: {email}", flush=True)
+
         if not username:
              raise Exception("Dados de usuário inválidos retornados pela USP.")
 
         # Check if user exists by nusp or username
         user = User.query.filter((User.nusp == nusp) | (User.username == username)).first()
+        
+        if user:
+             print(f"DEBUG: Found existing user: ID={user.id}, Username={user.username}, NUSP={user.nusp}", flush=True)
+        else:
+             print("DEBUG: User not found in DB. Proceeding to registration logic.", flush=True)
         
         if not user:
             # Auto-register new USP user
@@ -131,25 +148,18 @@ def usp_callback():
             # Check if username (loginUsuario) is already taken by a non-USP user
             existing_username = User.query.filter_by(username=username).first()
             if existing_username:
-                # Edge case: Username exists but nusp didn't match. 
-                # Could append nusp to username to make it unique or handle otherwise.
-                # For now, let's append a random suffix to avoid crash, or just fail safely.
-                # A safer bet for auto-reg is trust the nusp as unique identifier.
-                # If username conflict, maybe this is the same person who registered manually?
-                # If email matches, we might merge.
                 if email and existing_username.email == email:
                     user = existing_username
                     # Update NUSP to link account
                     user.nusp = nusp
+                    print(f"DEBUG: Linked to existing user by Email: {user.username}", flush=True)
                 else:
-                    # Username taken by someone else? Or same person different email?
-                    # Let's simple fail for safety or append suffix?
-                    # Plan says: "Create new user". Let's try to match by email one last time.
                     if email:
                         user_by_email = User.query.filter_by(email=email).first()
                         if user_by_email:
                             user = user_by_email
                             user.nusp = nusp
+                            print(f"DEBUG: Linked to existing user by Alternate Email Lookup: {user.username}", flush=True)
             
             if not user:
                 # Create NEW User
@@ -172,6 +182,7 @@ def usp_callback():
                     receive_notifications=False
                 )
                 db.session.add(user)
+                print(f"DEBUG: Creating NEW user: {final_username}", flush=True)
                 flash(f'Conta criada com sucesso! Seu acesso é limitado até aprovação.', 'info')
         
         # Ensure NUSP is set if it was missing (for existing users linking)
@@ -181,9 +192,11 @@ def usp_callback():
         db.session.commit()
         
         login_user(user)
+        print(f"DEBUG: Logged in user: {user.username}", flush=True)
         flash(f'Bem-vindo, {user.name}!', 'success')
         return redirect(url_for('main.index'))
         
     except Exception as e:
+        print(f"DEBUG: Error in USP callback: {str(e)}", flush=True)
         flash(f'Erro no login USP: {str(e)}', 'danger')
         return redirect(url_for('auth.login'))
