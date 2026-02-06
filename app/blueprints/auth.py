@@ -125,18 +125,60 @@ def usp_callback():
         user = User.query.filter((User.nusp == nusp) | (User.username == username)).first()
         
         if not user:
-            # Auto-register or Deny?
-            # Let's simple Check if email matches existing
-            if email:
-                 user = User.query.filter_by(email=email).first()
+            # Auto-register new USP user
+            import secrets
+            
+            # Check if username (loginUsuario) is already taken by a non-USP user
+            existing_username = User.query.filter_by(username=username).first()
+            if existing_username:
+                # Edge case: Username exists but nusp didn't match. 
+                # Could append nusp to username to make it unique or handle otherwise.
+                # For now, let's append a random suffix to avoid crash, or just fail safely.
+                # A safer bet for auto-reg is trust the nusp as unique identifier.
+                # If username conflict, maybe this is the same person who registered manually?
+                # If email matches, we might merge.
+                if email and existing_username.email == email:
+                    user = existing_username
+                    # Update NUSP to link account
+                    user.nusp = nusp
+                else:
+                    # Username taken by someone else? Or same person different email?
+                    # Let's simple fail for safety or append suffix?
+                    # Plan says: "Create new user". Let's try to match by email one last time.
+                    if email:
+                        user_by_email = User.query.filter_by(email=email).first()
+                        if user_by_email:
+                            user = user_by_email
+                            user.nusp = nusp
             
             if not user:
-                 flash('Usuário USP não encontrado. Entre em contato com o administrador.', 'danger')
-                 return redirect(url_for('auth.login'))
+                # Create NEW User
+                temp_pass = secrets.token_urlsafe(16)
+                hashed = generate_password_hash(temp_pass, method='pbkdf2:sha256')
+                
+                # Ensure username is unique if we didn't match above
+                final_username = username
+                if User.query.filter_by(username=final_username).first():
+                    final_username = f"{username}_{nusp}"
+
+                user = User(
+                    username=final_username,
+                    password_hash=hashed,
+                    name=name,
+                    email=email,
+                    nusp=nusp,
+                    role='user', # Default limited role
+                    is_default_password=False, # OAuth users don't use password
+                    receive_notifications=False
+                )
+                db.session.add(user)
+                flash(f'Conta criada com sucesso! Seu acesso é limitado até aprovação.', 'info')
         
-        # Update User data if needed
-        if not user.nusp and nusp:
+        # Ensure NUSP is set if it was missing (for existing users linking)
+        if hasattr(user, 'nusp') and not user.nusp and nusp:
             user.nusp = nusp
+            
+        db.session.commit()
         
         login_user(user)
         flash(f'Bem-vindo, {user.name}!', 'success')

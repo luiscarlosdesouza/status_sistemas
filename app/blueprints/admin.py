@@ -10,12 +10,20 @@ admin_bp = Blueprint('admin', __name__)
 @admin_bp.route('/admin')
 @login_required
 def dashboard():
+    if current_user.role not in ['admin', 'operator']:
+        flash('Acesso negado. Funcionalidade apenas para administradores ou operadores.', 'danger')
+        return redirect(url_for('main.index'))
+    
     sites = Site.query.all()
     return render_template('admin.html', sites=sites)
 
 @admin_bp.route('/site/add', methods=['POST'])
 @login_required
 def add_site():
+    if current_user.role not in ['admin', 'operator']:
+        flash('Acesso negado.', 'danger')
+        return redirect(url_for('main.index'))
+
     name = request.form.get('name')
     url = request.form.get('url')
     expected_text = request.form.get('expected_text')
@@ -41,6 +49,10 @@ def add_site():
 @admin_bp.route('/site/delete/<int:id>', methods=['POST'])
 @login_required
 def delete_site(id):
+    if current_user.role not in ['admin', 'operator']:
+        flash('Acesso negado.', 'danger')
+        return redirect(url_for('main.index'))
+
     site = Site.query.get(id)
     if site:
         db.session.delete(site)
@@ -50,6 +62,10 @@ def delete_site(id):
 @admin_bp.route('/site/edit/<int:id>', methods=['GET', 'POST'])
 @login_required
 def edit_site(id):
+    if current_user.role not in ['admin', 'operator']:
+        flash('Acesso negado.', 'danger')
+        return redirect(url_for('main.index'))
+
     site = Site.query.get(id)
     if request.method == 'POST':
         site.name = request.form.get('name')
