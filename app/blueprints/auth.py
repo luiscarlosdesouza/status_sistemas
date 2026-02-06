@@ -42,9 +42,7 @@ def logout():
     from flask import session
     session.clear()
     
-    # Redirect to USP Logout to clear SSO cookie
-    # This forces re-authentication on next login attempts
-    return redirect("https://usp.br/logout")
+    return redirect(url_for('main.index'))
 
 @auth_bp.route('/profile', methods=['GET', 'POST'])
 @login_required
