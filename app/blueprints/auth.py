@@ -128,7 +128,15 @@ def usp_callback():
         username = user_data.get('loginUsuario')
         name = user_data.get('nomeUsuario')
         email = user_data.get('emailPrincipalUsuario')
-        nusp = str(user_data.get('codpes')) # Número USP
+        
+        # FIX: 'codpes' might be missing. Use 'loginUsuario' as fallback for NUSP or handle None safely.
+        # Do NOT convert None to "None" string blindly.
+        raw_nusp = user_data.get('codpes')
+        if raw_nusp:
+            nusp = str(raw_nusp)
+        else:
+            # Fallback: In USP Digital, loginUsuario is often the NUSP
+            nusp = str(username) if username else None
         
         print(f"DEBUG: Extracted -> Username: {username}, NUSP: {nusp}, Email: {email}", flush=True)
 
