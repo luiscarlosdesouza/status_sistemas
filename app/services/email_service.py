@@ -66,7 +66,7 @@ def send_recovery_email(site, settings):
         
         sender = settings.email_user
         if sender and '@' not in sender:
-             if 'ime.usp.br' in settings.smtp_server:
+             if settings.smtp_server and 'ime.usp.br' in settings.smtp_server:
                  sender = f"{sender}@ime.usp.br"
         
         msg['From'] = f"Monitor de Sites <{sender}>"
@@ -102,7 +102,7 @@ def send_new_user_admin_notification(new_user, admins, settings):
         # Ensure 'From' has domain if user just put username (e.g. 'apoio')
         if sender and '@' not in sender:
              # Try to guess domain from SMTP server or hardcode based on user request
-             if 'ime.usp.br' in settings.smtp_server:
+             if settings.smtp_server and 'ime.usp.br' in settings.smtp_server:
                  sender = f"{sender}@ime.usp.br"
         
         msg['From'] = f"Monitor de Sites <{sender}>"
@@ -179,7 +179,7 @@ def send_role_update_email(user, new_role, settings):
     
     sender = settings.email_user
     if sender and '@' not in sender:
-         if 'ime.usp.br' in settings.smtp_server:
+         if settings.smtp_server and 'ime.usp.br' in settings.smtp_server:
              sender = f"{sender}@ime.usp.br"
     msg['From'] = f"Monitor de Sites <{sender}>"
     

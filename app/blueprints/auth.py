@@ -195,22 +195,28 @@ def usp_callback():
                 print(f"DEBUG: Creating NEW user: {final_username}", flush=True)
                 flash(f'Conta criada com sucesso! Seu acesso é limitado até aprovação.', 'info')
                 
-                # Send Notifications
-                settings = GlobalSettings.query.first()
-                if settings:
-                     # Notify Admins
-                     admins = User.query.filter_by(role='admin').all()
-                     send_new_user_admin_notification(user, admins, settings)
-                     
-                     # Welcome Email
-                     send_welcome_email(user, settings)
+                # COMMIT USER FIRST to ensure account exists even if email fails
+                db.session.commit()
+                print(f"DEBUG: User {final_username} committed to database.", flush=True)
+
+                # Send Notifications (Safely)
+                try:
+                    settings = GlobalSettings.query.first()
+                    if settings:
+                         # Notify Admins
+                         admins = User.query.filter_by(role='admin').all()
+                         send_new_user_admin_notification(user, admins, settings)
+                         
+                         # Welcome Email
+                         send_welcome_email(user, settings)
+                except Exception as e:
+                    print(f"DEBUG: Failed to send registration emails: {e}", flush=True)
         
         # Ensure NUSP is set if it was missing (for existing users linking)
         if hasattr(user, 'nusp') and not user.nusp and nusp:
             user.nusp = nusp
+            db.session.commit()
             
-        db.session.commit()
-        
         login_user(user)
         print(f"DEBUG: Logged in user: {user.username}", flush=True)
         flash(f'Bem-vindo, {user.name}!', 'success')
