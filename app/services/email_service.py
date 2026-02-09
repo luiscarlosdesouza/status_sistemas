@@ -24,7 +24,15 @@ def send_alert_email(site, settings):
     for recipient in recipients:
         msg = EmailMessage()
         msg['Subject'] = f"ALERT: {site.name} is OFFLINE"
-        msg['From'] = settings.email_user
+        msg = EmailMessage()
+        msg['Subject'] = f"ALERT: {site.name} is OFFLINE"
+        
+        sender = settings.email_user
+        if sender and '@' not in sender:
+             if 'ime.usp.br' in settings.smtp_server:
+                 sender = f"{sender}@ime.usp.br"
+        
+        msg['From'] = f"Monitor de Sites <{sender}>"
         msg['To'] = recipient
         msg.set_content(f"The site {site.name} ({site.url}) has been down for more than {settings.alert_threshold} minutes.\n\nTime: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\nError: {site.error_message}")
 
@@ -53,7 +61,15 @@ def send_recovery_email(site, settings):
     for recipient in recipients:
         msg = EmailMessage()
         msg['Subject'] = f"RECOVERY: {site.name} is BACK ONLINE"
-        msg['From'] = settings.email_user
+        msg = EmailMessage()
+        msg['Subject'] = f"RECOVERY: {site.name} is BACK ONLINE"
+        
+        sender = settings.email_user
+        if sender and '@' not in sender:
+             if 'ime.usp.br' in settings.smtp_server:
+                 sender = f"{sender}@ime.usp.br"
+        
+        msg['From'] = f"Monitor de Sites <{sender}>"
         msg['To'] = recipient
         msg.set_content(f"The site {site.name} ({site.url}) is responding again.\n\nTime: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
@@ -84,13 +100,12 @@ def send_new_user_admin_notification(new_user, admins, settings):
         msg['Subject'] = f"Novo Usuário Cadastrado: {new_user.name}"
         
         # Ensure 'From' has domain if user just put username (e.g. 'apoio')
-        sender = settings.email_user
         if sender and '@' not in sender:
              # Try to guess domain from SMTP server or hardcode based on user request
              if 'ime.usp.br' in settings.smtp_server:
                  sender = f"{sender}@ime.usp.br"
         
-        msg['From'] = sender
+        msg['From'] = f"Monitor de Sites <{sender}>"
         msg['To'] = recipient
         
         body = (
@@ -128,7 +143,7 @@ def send_welcome_email(new_user, settings):
     if sender and '@' not in sender:
          if 'ime.usp.br' in settings.smtp_server:
              sender = f"{sender}@ime.usp.br"
-    msg['From'] = sender
+    msg['From'] = f"Monitor de Sites <{sender}>"
     
     msg['To'] = new_user.email
     
@@ -166,7 +181,7 @@ def send_role_update_email(user, new_role, settings):
     if sender and '@' not in sender:
          if 'ime.usp.br' in settings.smtp_server:
              sender = f"{sender}@ime.usp.br"
-    msg['From'] = sender
+    msg['From'] = f"Monitor de Sites <{sender}>"
     
     msg['To'] = user.email
     

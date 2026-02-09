@@ -6,8 +6,8 @@ main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
 def index():
-    sites = Site.query.all()
-    return render_template('index.html', sites=sites)
+    sites = Site.query.order_by(Site.name).all()
+    return render_template('admin.html', sites=sites)
 
 @main_bp.route('/reports')
 @login_required
