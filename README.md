@@ -128,8 +128,34 @@ O campo **Texto Esperado** resolve isso.
     ```
 4.  Rode a aplicação:
     ```bash
-    python app.py
+    python run.py
     ```
+
+## 🏢 Trabalhando de Outro Computador (Home Office)
+
+Para continuar o trabalho em casa (ex: fim de semana):
+
+1.  **Clone o Repositório**:
+    ```bash
+    git clone https://github.com/luiscarlosdesouza/status_sistemas.git
+    cd status_sistemas
+    ```
+
+2.  **Configurar Credenciais (.env)**:
+    ⚠️ **Importante**: O arquivo `.env` contendo senhas não vai para o GitHub por segurança.
+    - Você precisará criar um arquivo `.env` na pasta do projeto.
+    - Opção A: Copie o conteúdo do `.env` do servidor de produção e leve num arquivo de texto seguro (ou USB).
+    - Opção B: Crie um novo usando o `.env-example` e preencha as chaves (USP/Google/Email).
+
+3.  **Rodar com Docker (Recomendado)**:
+    ```bash
+    docker-compose up -d --build
+    ```
+    O sistema estará disponível em [http://localhost:5000](http://localhost:5000).
+
+4.  **Banco de Dados**:
+    - Ao rodar em um novo computador, o banco começará **vazio** (apenas com o usuário admin padrão), pois o banco do servidor não é sincronizado pelo Git.
+    - Se precisar dos dados reais, você terá que copiar manualmente o arquivo `instance/sites.db` do servidor para o seu computador.
 
 ## Deploy em Servidor de Produção
 
