@@ -77,7 +77,13 @@ def check_sites(app, force=False):
                                 send_alert_email(site, settings)
                                 
                                 # Open History
-                                new_history = SiteHistory(site_id=site.id, status='offline', start_time=datetime.now(), error_message=site.error_message)
+                                new_history = SiteHistory(
+                                    site_id=site.id, 
+                                    site_name=site.name,
+                                    status='offline', 
+                                    start_time=datetime.now(), 
+                                    error_message=site.error_message
+                                )
                                 db.session.add(new_history)
                         else:
                             site.status = 'warning'
@@ -95,7 +101,13 @@ def check_sites(app, force=False):
                         site.status = 'offline'
                         if previous_status != 'offline':
                             send_alert_email(site, settings)
-                            new_history = SiteHistory(site_id=site.id, status='offline', start_time=datetime.now(), error_message=site.error_message)
+                            new_history = SiteHistory(
+                                site_id=site.id, 
+                                site_name=site.name, 
+                                status='offline', 
+                                start_time=datetime.now(), 
+                                error_message=site.error_message
+                            )
                             db.session.add(new_history)
                     else:
                         site.status = 'warning'

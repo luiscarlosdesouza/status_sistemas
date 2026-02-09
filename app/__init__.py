@@ -1,6 +1,6 @@
 from flask import Flask
 from .extensions import db, login_manager, migrate, oauth, scheduler
-from .models import User, GlobalSettings
+from .models import User, GlobalSettings, Site, SiteHistory
 from .services.monitor_service import check_sites
 from config import Config
 import atexit

@@ -25,7 +25,8 @@ class Site(db.Model):
 
 class SiteHistory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    site_id = db.Column(db.Integer, db.ForeignKey('site.id'), nullable=False)
+    site_id = db.Column(db.Integer, db.ForeignKey('site.id'), nullable=True) # Nullable when site is deleted
+    site_name = db.Column(db.String(100), nullable=True) # Snapshot of site name
     site = db.relationship('Site', backref=db.backref('history', lazy=True))
     status = db.Column(db.String(20), nullable=False) # 'offline' (confirmed failure)
     start_time = db.Column(db.DateTime, nullable=False, default=datetime.now)

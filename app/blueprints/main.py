@@ -31,8 +31,9 @@ def reports():
             duration = f"{int(hours)}h {int(minutes)}m"
             
         enriched_history.append({
-            'site_name': h.site.name,
-            'url': h.site.url,
+            'id': h.id,
+            'site_name': h.site.name if h.site else (h.site_name or 'Site Desconhecido'),
+            'url': h.site.url if h.site else '',
             'status': h.status,
             'start_time': h.start_time,
             'end_time': h.end_time,

@@ -69,8 +69,13 @@ def delete_site(id):
 
     site = Site.query.get(id)
     if site:
-        # Manually delete history to avoid FK constraint error (no cascade in DB)
-        SiteHistory.query.filter_by(site_id=site.id).delete()
+        # Preserve history: Set site_id to NULL and ensure site_name is set
+        history_records = SiteHistory.query.filter_by(site_id=site.id).all()
+        for record in history_records:
+            record.site_id = None
+            if not record.site_name:
+                record.site_name = site.name
+                
         db.session.delete(site)
         db.session.commit()
     return redirect(url_for('admin.dashboard'))
@@ -218,3 +223,17 @@ def delete_user(user_id):
             db.session.commit()
             flash('Usuário excluído.', 'success')
     return redirect(url_for('admin.users_list'))
+
+@admin_bp.route('/history/delete/<int:id>', methods=['POST'])
+@login_required
+def delete_history(id):
+    if current_user.role not in ['admin', 'operator']:
+        flash('Acesso negado.', 'danger')
+        return redirect(url_for('main.reports'))
+        
+    history = SiteHistory.query.get(id)
+    if history:
+        db.session.delete(history)
+        db.session.commit()
+        flash('Registro de histórico excluído.', 'success')
+    return redirect(url_for('main.reports'))
