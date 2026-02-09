@@ -5,4 +5,4 @@ app = create_app()
 if __name__ == "__main__":
     print("Initializing database...")
     init_db(app)
-    print("Database initialized successfully with default Admin and Settings.")
+    print("Database initialized successfully!")
