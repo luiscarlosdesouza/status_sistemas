@@ -3,7 +3,9 @@ from flask_login import login_required, current_user
 from werkzeug.security import generate_password_hash
 from ..extensions import db
 from ..models import Site, User, GlobalSettings
+
 from ..services.monitor_service import check_sites
+from ..services.email_service import send_role_update_email
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -141,11 +143,21 @@ def edit_user(user_id=None):
         receive_notifications = 'receive_notifications' in request.form
         
         if user:
+            new_role = request.form.get('role')
+            old_role = user.role
+            
             user.name = name
             user.email = email
-            user.role = role
+            user.role = new_role
             user.receive_notifications = receive_notifications
             db.session.commit()
+            
+            # Send Notification if Role Changed
+            if old_role != new_role:
+                settings = GlobalSettings.query.first()
+                if settings:
+                    send_role_update_email(user, new_role, settings)
+            
             flash('Usuário atualizado com sucesso!', 'success')
             return redirect(url_for('admin.users_list'))
         else:

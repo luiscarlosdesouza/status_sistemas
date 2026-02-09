@@ -2,7 +2,8 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from ..extensions import db, login_manager, oauth
-from ..models import User
+from ..models import User, GlobalSettings
+from ..services.email_service import send_new_user_admin_notification, send_welcome_email
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -191,7 +192,18 @@ def usp_callback():
                 )
                 db.session.add(user)
                 print(f"DEBUG: Creating NEW user: {final_username}", flush=True)
+                print(f"DEBUG: Creating NEW user: {final_username}", flush=True)
                 flash(f'Conta criada com sucesso! Seu acesso é limitado até aprovação.', 'info')
+                
+                # Send Notifications
+                settings = GlobalSettings.query.first()
+                if settings:
+                     # Notify Admins
+                     admins = User.query.filter_by(role='admin').all()
+                     send_new_user_admin_notification(user, admins, settings)
+                     
+                     # Welcome Email
+                     send_welcome_email(user, settings)
         
         # Ensure NUSP is set if it was missing (for existing users linking)
         if hasattr(user, 'nusp') and not user.nusp and nusp:
