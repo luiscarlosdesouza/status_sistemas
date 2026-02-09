@@ -41,11 +41,11 @@
                         <a class="nav-link" href="{{ url_for('admin.dashboard') }}"><i class="bi bi-gear"></i>
                             Administração</a>
                     </li>
-                    {% endif %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('main.reports') }}"><i
                                 class="bi bi-file-earmark-bar-graph"></i> Relatórios</a>
                     </li>
+                    {% endif %}
                     {% if current_user.role == 'admin' %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('admin.users_list') }}"><i class="bi bi-people"></i>

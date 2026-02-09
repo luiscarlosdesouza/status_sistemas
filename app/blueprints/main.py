@@ -1,5 +1,5 @@
-from flask import Blueprint, render_template
-from flask_login import login_required
+from flask import Blueprint, render_template, redirect, url_for, flash
+from flask_login import login_required, current_user
 from ..models import Site, SiteHistory
 
 main_bp = Blueprint('main', __name__)
@@ -12,6 +12,10 @@ def index():
 @main_bp.route('/reports')
 @login_required
 def reports():
+    if current_user.role not in ['admin', 'operator']:
+        flash('Acesso negado.', 'danger')
+        return redirect(url_for('main.index'))
+    
     # Fetch offline events sorted by start_time desc
     history = SiteHistory.query.order_by(SiteHistory.start_time.desc()).all()
     
