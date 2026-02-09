@@ -34,6 +34,8 @@
                     <div class="mb-3">
                         <label class="form-label">Perfil de Acesso</label>
                         <select class="form-select" name="role">
+                            <option value="user" {{ 'selected' if not user or user.role=='user' else '' }}>Usuário
+                                (Limitado - Apenas Visualização)</option>
                             <option value="operator" {{ 'selected' if user and user.role=='operator' else '' }}>Operador
                                 (Gerencia Sites e Vê Relatórios)</option>
                             <option value="admin" {{ 'selected' if user and user.role=='admin' else '' }}>Administrador
