@@ -4,7 +4,7 @@ from ..extensions import db
 from ..models import Site, SiteHistory, GlobalSettings
 from .email_service import send_alert_email, send_recovery_email
 
-def check_sites(app):
+def check_sites(app, force=False):
     # print("Tick...") 
     with app.app_context():
         settings = GlobalSettings.query.first()
@@ -19,8 +19,8 @@ def check_sites(app):
 
         sites = Site.query.all()
         for site in sites:
-            # Check if it is time to check this site
-            if site.last_checked:
+            # Check if it is time to check this site (unless forced)
+            if not force and site.last_checked:
                 time_since_check = datetime.now() - site.last_checked
                 if time_since_check.total_seconds() < (current_interval_minutes * 60):
                     continue # Skip, not time yet

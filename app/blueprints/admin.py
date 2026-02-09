@@ -17,7 +17,19 @@ def dashboard():
         return redirect(url_for('main.index'))
     
     sites = Site.query.all()
+    sites = Site.query.all()
     return render_template('admin.html', sites=sites)
+
+@admin_bp.route('/force_update')
+@login_required
+def force_update():
+    if current_user.role not in ['admin', 'operator']:
+        flash('Acesso negado.', 'danger')
+        return redirect(url_for('main.index'))
+        
+    check_sites(current_app._get_current_object(), force=True)
+    flash('Verificação de sites realizada com sucesso!', 'success')
+    return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/site/add', methods=['POST'])
 @login_required
