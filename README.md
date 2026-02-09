@@ -192,6 +192,15 @@ Se você quer levar **este sistema exato** (com o banco de dados já preenchido 
 - `templates/`: Arquivos HTML (Bootstrap).
 - `sites.db`: Banco de dados SQLite (gerado automaticamente).
 
+### Recriando o Banco de Dados
+Se você apagar o arquivo `sites.db` (ou o volume), o sistema dará erro 500 pois o banco não existe mais.
+Para recriá-lo manualmente, execute este comando com o container rodando:
+
+```bash
+sudo docker-compose exec web python init_db.py
+```
+Isso criará as tabelas e o usuário `admin` padrão novamente.
+
 ## Guia de Configuração (Interface Gráfica)
 
 **Não é mais necessário editar código para mudar configurações!**
