@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash,
 from flask_login import login_required, current_user
 from werkzeug.security import generate_password_hash
 from ..extensions import db
-from ..models import Site, User, GlobalSettings
+from ..models import Site, User, GlobalSettings, SiteHistory
 
 from ..services.monitor_service import check_sites
 from ..services.email_service import send_role_update_email
@@ -69,6 +69,8 @@ def delete_site(id):
 
     site = Site.query.get(id)
     if site:
+        # Manually delete history to avoid FK constraint error (no cascade in DB)
+        SiteHistory.query.filter_by(site_id=site.id).delete()
         db.session.delete(site)
         db.session.commit()
     return redirect(url_for('admin.dashboard'))
