@@ -82,7 +82,15 @@ def send_new_user_admin_notification(new_user, admins, settings):
     for recipient in recipients:
         msg = EmailMessage()
         msg['Subject'] = f"Novo Usuário Cadastrado: {new_user.name}"
-        msg['From'] = settings.email_user
+        
+        # Ensure 'From' has domain if user just put username (e.g. 'apoio')
+        sender = settings.email_user
+        if sender and '@' not in sender:
+             # Try to guess domain from SMTP server or hardcode based on user request
+             if 'ime.usp.br' in settings.smtp_server:
+                 sender = f"{sender}@ime.usp.br"
+        
+        msg['From'] = sender
         msg['To'] = recipient
         
         body = (
@@ -115,7 +123,13 @@ def send_welcome_email(new_user, settings):
 
     msg = EmailMessage()
     msg['Subject'] = "Bem-vindo ao Monitor de Sites - Aguardando Aprovação"
-    msg['From'] = settings.email_user
+    
+    sender = settings.email_user
+    if sender and '@' not in sender:
+         if 'ime.usp.br' in settings.smtp_server:
+             sender = f"{sender}@ime.usp.br"
+    msg['From'] = sender
+    
     msg['To'] = new_user.email
     
     body = (
@@ -147,7 +161,13 @@ def send_role_update_email(user, new_role, settings):
 
     msg = EmailMessage()
     msg['Subject'] = "Seu nível de acesso foi atualizado"
-    msg['From'] = settings.email_user
+    
+    sender = settings.email_user
+    if sender and '@' not in sender:
+         if 'ime.usp.br' in settings.smtp_server:
+             sender = f"{sender}@ime.usp.br"
+    msg['From'] = sender
+    
     msg['To'] = user.email
     
     role_name = "Operador" if new_role == 'operator' else "Administrador" if new_role == 'admin' else "Usuário (Limitado)"
