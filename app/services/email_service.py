@@ -25,7 +25,7 @@ def send_alert_email(site, settings):
         msg = EmailMessage()
         msg['Subject'] = f"ALERT: {site.name} is OFFLINE"
         msg = EmailMessage()
-        msg['Subject'] = f"ALERT: {site.name} is OFFLINE"
+        msg['Subject'] = f"ALERTA: {site.name} está OFFLINE"
         
         sender = settings.email_user
         if sender and '@' not in sender:
@@ -34,7 +34,7 @@ def send_alert_email(site, settings):
         
         msg['From'] = f"Monitor de Sites <{sender}>"
         msg['To'] = recipient
-        msg.set_content(f"The site {site.name} ({site.url}) has been down for more than {settings.alert_threshold} minutes.\n\nTime: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\nError: {site.error_message}")
+        msg.set_content(f"O site {site.name} ({site.url}) está inacessível há mais de {settings.alert_threshold} minutos.\n\nHorário: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}\nErro: {site.error_message}")
 
         try:
             _send_email(msg, settings, smtp_port)
@@ -62,7 +62,7 @@ def send_recovery_email(site, settings):
         msg = EmailMessage()
         msg['Subject'] = f"RECOVERY: {site.name} is BACK ONLINE"
         msg = EmailMessage()
-        msg['Subject'] = f"RECOVERY: {site.name} is BACK ONLINE"
+        msg['Subject'] = f"RECUPERAÇÃO: {site.name} está ONLINE novamente"
         
         sender = settings.email_user
         if sender and '@' not in sender:
@@ -71,7 +71,7 @@ def send_recovery_email(site, settings):
         
         msg['From'] = f"Monitor de Sites <{sender}>"
         msg['To'] = recipient
-        msg.set_content(f"The site {site.name} ({site.url}) is responding again.\n\nTime: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        msg.set_content(f"O site {site.name} ({site.url}) voltou a responder.\n\nHorário: {datetime.now().strftime('%d/%m/%Y %H:%M:%S')}")
 
         try:
             _send_email(msg, settings, smtp_port)
