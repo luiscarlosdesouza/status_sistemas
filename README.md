@@ -18,6 +18,10 @@ Sistema robusto para monitoramento de disponibilidade de sites (Uptime Monitor) 
   - Ordenação alfabética automática dos sites.
   - Dashboard público (Status) separado do Painel Administrativo.
   - Exibição clara do nível de acesso do usuário.
+- **Novas Ferramentas**:
+  - **Exportação de PDF**: Relatórios de falhas em formato A4.
+  - **Histórico Persistente**: Dados de falhas são mantidos mesmo após exclusão do site.
+  - **Atualização Manual**: Botão para forçar verificação imediata de status.
 
 ## Funcionalidades Principais
 - **Monitoramento contínuo**: Verifica URLs periodicamente (configurável para dias úteis/fim de semana).
