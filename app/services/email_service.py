@@ -100,6 +100,7 @@ def send_new_user_admin_notification(new_user, admins, settings):
         msg['Subject'] = f"Novo Usuário Cadastrado: {new_user.name}"
         
         # Ensure 'From' has domain if user just put username (e.g. 'apoio')
+        sender = settings.email_user
         if sender and '@' not in sender:
              # Try to guess domain from SMTP server or hardcode based on user request
              if settings.smtp_server and 'ime.usp.br' in settings.smtp_server:
